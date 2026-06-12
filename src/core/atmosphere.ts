@@ -3,24 +3,31 @@ import type { ResolvedConfig } from './types';
 export interface AtmosphereState {
   lightningFlash: number;
   lightningTimer: number;
+  boltPoints: Array<[number, number]> | null;
+  time: number;
 }
 
 export function createAtmosphereState(): AtmosphereState {
-  return { lightningFlash: 0, lightningTimer: 2000 };
+  return { lightningFlash: 0, lightningTimer: 2000, boltPoints: null, time: 0 };
 }
 
 export function updateAtmosphere(state: AtmosphereState, config: ResolvedConfig, delta: number): void {
+  state.time += delta;
+
   if (config.condition === 'storm') {
     state.lightningTimer -= delta * 1000;
     if (state.lightningTimer <= 0) {
       state.lightningFlash = 1.0;
       const base = config.intensity === 'heavy' ? 1500 : config.intensity === 'medium' ? 2500 : 4000;
       state.lightningTimer = base + Math.random() * base;
+      state.boltPoints = generateBolt();
     }
-    state.lightningFlash = Math.max(0, state.lightningFlash - delta * 4);
+    state.lightningFlash = Math.max(0, state.lightningFlash - delta * 3.5);
+    if (state.lightningFlash <= 0) state.boltPoints = null;
   } else {
     state.lightningFlash = 0;
     state.lightningTimer = 2000;
+    state.boltPoints = null;
   }
 }
 
@@ -48,10 +55,68 @@ export function drawAtmosphere(
   }
 
   if (state.lightningFlash > 0) {
-    ctx.globalAlpha = alpha * state.lightningFlash * 0.7;
+    ctx.globalAlpha = alpha * state.lightningFlash * 0.45;
     ctx.fillStyle = 'rgba(200,220,255,1)';
     ctx.fillRect(0, 0, width, height);
+
+    if (state.boltPoints) {
+      drawLightningBolt(ctx, state.boltPoints, alpha * state.lightningFlash, width, height);
+    }
   }
+
+  ctx.restore();
+}
+
+function generateBolt(): Array<[number, number]> {
+  const startX = 0.2 + Math.random() * 0.6;
+  const points: Array<[number, number]> = [[startX, 0.08]];
+  let cx = startX;
+  for (let i = 1; i <= 8; i++) {
+    cx += (Math.random() - 0.5) * 0.13;
+    cx = Math.max(0.05, Math.min(0.95, cx));
+    points.push([cx, 0.08 + (0.52 * i) / 8]);
+  }
+  return points;
+}
+
+function drawLightningBolt(
+  ctx: CanvasRenderingContext2D,
+  points: Array<[number, number]>,
+  alpha: number,
+  width: number,
+  height: number,
+): void {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  const path = () => {
+    ctx.beginPath();
+    ctx.moveTo(points[0][0] * width, points[0][1] * height);
+    for (let i = 1; i < points.length; i++) {
+      ctx.lineTo(points[i][0] * width, points[i][1] * height);
+    }
+  };
+
+  path();
+  ctx.strokeStyle = 'rgba(140,180,255,0.5)';
+  ctx.lineWidth = 10;
+  ctx.shadowColor = '#90b8ff';
+  ctx.shadowBlur = 30;
+  ctx.stroke();
+
+  path();
+  ctx.strokeStyle = 'rgba(200,220,255,0.85)';
+  ctx.lineWidth = 3.5;
+  ctx.shadowBlur = 12;
+  ctx.stroke();
+
+  path();
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1.5;
+  ctx.shadowBlur = 0;
+  ctx.stroke();
 
   ctx.restore();
 }
