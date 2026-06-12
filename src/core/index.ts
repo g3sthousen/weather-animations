@@ -18,7 +18,8 @@ export class WeatherScene {
   constructor(private container: HTMLElement) {
     if (!container) throw new Error('WeatherScene: container element is required');
 
-    container.style.position = 'relative';
+    const pos = getComputedStyle(container).position;
+    if (pos === 'static') container.style.position = 'relative';
     container.style.overflow = 'hidden';
 
     this.skyEl = document.createElement('div');
