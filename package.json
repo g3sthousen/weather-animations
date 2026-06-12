@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build:lib": "vite build --config vite.lib.config.ts",
+    "build:lib": "LIB_ENTRY=core vite build --config vite.lib.config.ts && LIB_ENTRY=react vite build --config vite.lib.config.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:visual": "playwright test"
