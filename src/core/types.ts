@@ -34,6 +34,12 @@ export interface Particle {
   active: boolean;
 }
 
+export interface CloudLobe {
+  dx: number;
+  dy: number;
+  r: number;
+}
+
 export interface CloudBlob {
   x: number;
   y: number;
@@ -42,6 +48,10 @@ export interface CloudBlob {
   alpha: number;
   speed: number;
   layer: 0 | 1 | 2;
+  lobes: CloudLobe[];
+  sprite?: OffscreenCanvas;
+  spriteCx?: number;
+  spriteCy?: number;
 }
 
 export const VALID_CONDITIONS: Condition[] = ['clear', 'cloudy', 'rain', 'snow', 'storm', 'fog', 'wind'];
