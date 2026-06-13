@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { ParticlePool } from '../../src/core/particles';
+import { ParticlePool, getFidelityScale } from '../../src/core/particles';
+import { resolveConfig } from '../../src/core/types';
 
 describe('ParticlePool', () => {
   it('creates pool with given size', () => {
@@ -47,5 +48,14 @@ describe('ParticlePool', () => {
     pool.spawn();
     pool.reset();
     expect(pool.spawn()).not.toBeNull();
+  });
+});
+
+describe('getFidelityScale', () => {
+  it('is 1 at subtle', () => {
+    expect(getFidelityScale(resolveConfig({ condition: 'rain' }))).toBe(1);
+  });
+  it('is 1.8 at rich', () => {
+    expect(getFidelityScale(resolveConfig({ condition: 'rain', fidelity: 'rich' }))).toBeCloseTo(1.8);
   });
 });

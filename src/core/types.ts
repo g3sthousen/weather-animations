@@ -1,12 +1,14 @@
 export type Condition = 'clear' | 'cloudy' | 'rain' | 'snow' | 'storm' | 'fog' | 'wind';
 export type Intensity = 'light' | 'medium' | 'heavy';
 export type TimeOfDay = 'day' | 'night';
+export type Fidelity = 'subtle' | 'rich';
 
 export interface WeatherConfig {
   condition: Condition;
   intensity?: Intensity;
   time?: TimeOfDay;
   transitionMs?: number;
+  fidelity?: Fidelity;
 }
 
 export interface ResolvedConfig {
@@ -14,6 +16,7 @@ export interface ResolvedConfig {
   intensity: Intensity;
   time: TimeOfDay;
   transitionMs: number;
+  fidelity: Fidelity;
 }
 
 export interface RGBColor {
@@ -65,5 +68,6 @@ export function resolveConfig(config: WeatherConfig): ResolvedConfig {
     intensity: config.intensity ?? 'medium',
     time: config.time ?? 'day',
     transitionMs: config.transitionMs ?? 1200,
+    fidelity: config.fidelity ?? 'subtle',
   };
 }

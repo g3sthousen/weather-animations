@@ -1,5 +1,5 @@
 import { WeatherScene } from '../core/index';
-import type { Condition, Intensity, TimeOfDay } from '../core/index';
+import type { Condition, Intensity, TimeOfDay, Fidelity } from '../core/index';
 import { seedRng } from '../core/rng';
 
 const container = document.getElementById('weather-container')!;
@@ -16,6 +16,7 @@ const scene = new WeatherScene(container, { manual });
 let activeCondition: Condition = (params.get('condition') as Condition) ?? 'clear';
 let activeTime: TimeOfDay = (params.get('time') as TimeOfDay) ?? 'day';
 let activeIntensity: Intensity = (params.get('intensity') as Intensity) ?? 'medium';
+let activeFidelity: Fidelity = (params.get('fidelity') as Fidelity) ?? 'subtle';
 
 const CONDITIONS: Condition[] = ['clear', 'cloudy', 'rain', 'snow', 'storm', 'fog', 'wind'];
 const CONDITION_LABELS: Record<Condition, string> = {
@@ -24,7 +25,7 @@ const CONDITION_LABELS: Record<Condition, string> = {
 };
 
 function render() {
-  scene.set({ condition: activeCondition, time: activeTime, intensity: activeIntensity });
+  scene.set({ condition: activeCondition, time: activeTime, intensity: activeIntensity, fidelity: activeFidelity });
 }
 
 function buildControls() {
@@ -64,9 +65,20 @@ function buildControls() {
     intRow.appendChild(btn);
   }
 
+  const fidRow = document.createElement('div');
+  fidRow.className = 'btn-row';
+  for (const f of ['subtle', 'rich'] as Fidelity[]) {
+    const btn = document.createElement('button');
+    btn.textContent = f === 'subtle' ? 'Subtle' : 'Rich';
+    if (f === activeFidelity) btn.classList.add('active');
+    btn.addEventListener('click', () => { activeFidelity = f; buildControls(); render(); });
+    fidRow.appendChild(btn);
+  }
+
   controlsEl.appendChild(condRow);
   controlsEl.appendChild(timeRow);
   controlsEl.appendChild(intRow);
+  controlsEl.appendChild(fidRow);
 }
 
 buildControls();

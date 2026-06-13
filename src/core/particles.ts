@@ -38,9 +38,15 @@ export function getIntensityScale(config: ResolvedConfig): number {
   return INTENSITY_SCALE[config.intensity];
 }
 
+const FIDELITY_SCALE = { subtle: 1, rich: 1.8 } as const;
+
+export function getFidelityScale(config: ResolvedConfig): number {
+  return FIDELITY_SCALE[config.fidelity];
+}
+
 // --- Particle System ---
 
-const POOL_SIZE = 600;
+const POOL_SIZE = 900;
 
 export class ParticleSystem {
   private pool: ParticlePool;
@@ -72,7 +78,7 @@ export class ParticleSystem {
     if (!this.config) return;
     this.time += delta;
     const cfg = this.config;
-    const scale = getIntensityScale(cfg);
+    const scale = getIntensityScale(cfg) * getFidelityScale(cfg);
     const w = this.width;
     const h = this.height;
 
