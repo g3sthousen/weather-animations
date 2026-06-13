@@ -1,7 +1,7 @@
 import type { ResolvedConfig, CloudBlob } from './types';
 import { applySky, lerpSky } from './sky';
 import { initClouds, updateClouds, drawClouds } from './clouds';
-import { drawAtmosphere, updateAtmosphere, createAtmosphereState } from './atmosphere';
+import { drawAtmosphere, drawCelestial, updateAtmosphere, createAtmosphereState } from './atmosphere';
 import type { AtmosphereState } from './atmosphere';
 import { ParticleSystem } from './particles';
 import { createTransition, updateTransition, getProgress, isComplete } from './transition';
@@ -96,10 +96,13 @@ export function renderEngine(
     const progress = getProgress(state.transition);
     const from = state.transition.from;
     const to = state.transition.to;
+    const fromAlpha = 1 - progress;
 
     lerpSky(skyEl, from, to, progress);
 
-    const fromAlpha = 1 - progress;
+    drawCelestial(ctx, from, state.currentAtmo, fromAlpha, width, height);
+    if (state.transAtmo) drawCelestial(ctx, to, state.transAtmo, progress, width, height);
+
     drawClouds(ctx, state.currentClouds, from, fromAlpha);
     drawAtmosphere(ctx, from, state.currentAtmo, fromAlpha, width, height);
     state.currentPS.draw(ctx, fromAlpha, from);
@@ -109,6 +112,7 @@ export function renderEngine(
     if (state.transPS) state.transPS.draw(ctx, progress, to);
   } else {
     applySky(skyEl, state.current, state.currentAtmo.lightningFlash);
+    drawCelestial(ctx, state.current, state.currentAtmo, 1, width, height);
     drawClouds(ctx, state.currentClouds, state.current, 1);
     drawAtmosphere(ctx, state.current, state.currentAtmo, 1, width, height);
     state.currentPS.draw(ctx, 1, state.current);

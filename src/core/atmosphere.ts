@@ -16,6 +16,25 @@ export function fogBob(time: number, baseY: number, amp: number, freq: number, p
   return baseY + amp * Math.sin(time * freq + phase);
 }
 
+const CLOUDY_CELESTIAL_OPACITY: Record<ResolvedConfig['intensity'], number> = {
+  light: 0.45,
+  medium: 0.22,
+  heavy: 0,
+};
+
+export function getCelestialOpacity(config: ResolvedConfig): number {
+  if (config.condition === 'cloudy') {
+    return CLOUDY_CELESTIAL_OPACITY[config.intensity];
+  }
+  if (config.time === 'day' && (config.condition === 'clear' || config.condition === 'wind')) {
+    return 1;
+  }
+  if (config.time === 'night' && config.condition === 'clear') {
+    return 1;
+  }
+  return 0;
+}
+
 export interface AtmosphereState {
   lightningFlash: number;
   lightningTimer: number;
@@ -94,14 +113,6 @@ export function drawAtmosphere(
   ctx.save();
   ctx.globalAlpha = alpha;
 
-  if (config.time === 'day' && (config.condition === 'clear' || config.condition === 'wind')) {
-    drawSun(ctx, config, state, width, height);
-  }
-
-  if (config.time === 'night' && config.condition === 'clear') {
-    drawMoon(ctx, width, height);
-  }
-
   if (config.condition === 'fog') {
     drawFog(ctx, config, state, width, height);
   }
@@ -134,6 +145,27 @@ export function drawAtmosphere(
     ctx.restore();
   }
 
+  ctx.restore();
+}
+
+export function drawCelestial(
+  ctx: CanvasRenderingContext2D,
+  config: ResolvedConfig,
+  state: AtmosphereState,
+  alpha: number,
+  width: number,
+  height: number,
+): void {
+  const opacity = getCelestialOpacity(config);
+  if (opacity <= 0) return;
+
+  ctx.save();
+  ctx.globalAlpha = alpha * opacity;
+  if (config.time === 'day') {
+    drawSun(ctx, config, state, width, height);
+  } else {
+    drawMoon(ctx, width, height);
+  }
   ctx.restore();
 }
 
