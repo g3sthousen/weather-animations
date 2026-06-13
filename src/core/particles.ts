@@ -1,5 +1,6 @@
 import type { Particle, ResolvedConfig } from './types';
 import { random } from './rng';
+import { clamp } from './math';
 
 export class ParticlePool {
   readonly particles: Particle[];
@@ -50,6 +51,25 @@ export function depthFactor(depth: number, far: number, near: number): number {
   return far + (near - far) * depth;
 }
 
+const SPLASH_LIFE = 0.15; // seconds
+
+export function rainSplashes(intensity: ResolvedConfig['intensity']): boolean {
+  return intensity !== 'light';
+}
+
+export function splashRadius(age: number, maxRadius: number, life: number): number {
+  return maxRadius * clamp(age / life, 0, 1);
+}
+
+export function splashAlpha(age: number, life: number): number {
+  return 1 - clamp(age / life, 0, 1);
+}
+
+/** Global wind value: base offset plus a slow sinusoidal gust. */
+export function gustOffset(time: number, base: number, amp: number, freq: number): number {
+  return base + amp * Math.sin(time * freq);
+}
+
 // --- Particle System ---
 
 const POOL_SIZE = 900;
@@ -87,6 +107,8 @@ export class ParticleSystem {
     const scale = getIntensityScale(cfg) * getFidelityScale(cfg);
     const w = this.width;
     const h = this.height;
+    const rich = cfg.fidelity === 'rich';
+    const gust = gustOffset(this.time, -20, 12, 0.4);
 
     for (const p of this.pool.particles) {
       if (!p.active) continue;
@@ -94,11 +116,27 @@ export class ParticleSystem {
       p.y += p.vy * delta;
       p.phase += delta;
 
+      if (p.kind === 'splash') {
+        if (p.phase >= SPLASH_LIFE) p.active = false;
+        continue;
+      }
+
       if (cfg.condition === 'snow') {
         p.vx = Math.sin(p.phase * 0.8) * 18;
       }
+      if (cfg.condition === 'rain') {
+        p.vx = gust * depthFactor(p.depth, 0.6, 1);
+      }
       if (cfg.condition === 'clear' && cfg.time === 'night') {
         p.alpha = 0.5 + 0.5 * Math.sin(p.phase * 2.5 + p.size);
+      }
+
+      // Rain impact → splash at the bottom edge (intensity-gated; rich = more, bigger).
+      if (cfg.condition === 'rain' && p.kind === 'primary' && p.y > h && rainSplashes(cfg.intensity)) {
+        const threshold = rich ? 0.3 : 0.6;
+        if (p.depth > threshold) spawnSplash(this.pool, p.x, h, rich);
+        p.active = false;
+        continue;
       }
 
       if (p.y > h + 20 || p.x < -20 || p.x > w + 20 || p.y < -20) {
@@ -140,6 +178,17 @@ export class ParticleSystem {
 }
 
 function drawParticle(ctx: CanvasRenderingContext2D, p: Particle, cfg: ResolvedConfig, systemAlpha: number): void {
+  if (p.kind === 'splash') {
+    const r = splashRadius(p.phase, p.size, SPLASH_LIFE);
+    ctx.globalAlpha = systemAlpha * splashAlpha(p.phase, SPLASH_LIFE) * 0.6;
+    ctx.strokeStyle = 'rgba(180,200,220,1)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y, r, r * 0.4, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    return;
+  }
+
   ctx.globalAlpha = systemAlpha * p.alpha;
 
   if (cfg.condition === 'rain' || cfg.condition === 'storm') {
@@ -174,6 +223,22 @@ function drawParticle(ctx: CanvasRenderingContext2D, p: Particle, cfg: ResolvedC
     ctx.lineTo(p.x + p.length, p.y);
     ctx.stroke();
   }
+}
+
+function spawnSplash(pool: ParticlePool, x: number, h: number, rich: boolean): void {
+  const p = pool.spawn();
+  if (!p) return;
+  p.x = x;
+  p.y = h - 1;
+  p.vx = 0;
+  p.vy = 0;
+  p.alpha = 1;
+  p.size = rich ? 7 + random() * 4 : 4 + random() * 3; // max ring radius
+  p.length = 0;
+  p.phase = 0; // reused as age in seconds
+  p.depth = 1;
+  p.bounces = 0;
+  p.kind = 'splash';
 }
 
 function spawnRain(pool: ParticlePool, w: number): void {
