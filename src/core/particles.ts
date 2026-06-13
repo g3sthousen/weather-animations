@@ -241,6 +241,16 @@ function drawParticle(ctx: CanvasRenderingContext2D, p: Particle, cfg: ResolvedC
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
     ctx.fill();
+    if (p.length > 0 && cfg.fidelity === 'rich') {
+      ctx.globalAlpha = systemAlpha * p.alpha * 0.6;
+      ctx.strokeStyle = 'rgba(255,255,240,1)';
+      ctx.lineWidth = 0.75;
+      const g = p.size * 3;
+      ctx.beginPath();
+      ctx.moveTo(p.x - g, p.y); ctx.lineTo(p.x + g, p.y);
+      ctx.moveTo(p.x, p.y - g); ctx.lineTo(p.x, p.y + g);
+      ctx.stroke();
+    }
   } else if (cfg.condition === 'wind') {
     ctx.strokeStyle = `rgba(180,210,240,${p.alpha})`;
     ctx.lineWidth = 1;
@@ -332,13 +342,14 @@ function spawnSnow(pool: ParticlePool, w: number): void {
 function spawnStar(pool: ParticlePool, w: number, h: number): void {
   const p = pool.spawn();
   if (!p) return;
+  const hero = random() < 0.12;
   p.x = random() * w;
   p.y = random() * h * 0.7;
   p.vx = 0;
   p.vy = 0;
   p.alpha = 0.3 + random() * 0.7;
-  p.size = 0.5 + random() * 1.5;
-  p.length = 0;
+  p.size = hero ? 1.6 + random() * 1.2 : 0.5 + random() * 1.5;
+  p.length = hero ? 1 : 0; // hero marker
   p.phase = random() * Math.PI * 2;
   p.depth = 0.5;
   p.bounces = 0;

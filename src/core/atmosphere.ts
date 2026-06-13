@@ -95,7 +95,7 @@ export function drawAtmosphere(
   ctx.globalAlpha = alpha;
 
   if (config.time === 'day' && (config.condition === 'clear' || config.condition === 'wind')) {
-    drawSun(ctx, width, height);
+    drawSun(ctx, config, state, width, height);
   }
 
   if (config.time === 'night' && config.condition === 'clear') {
@@ -211,16 +211,35 @@ function drawLightningBolt(
   ctx.restore();
 }
 
-function drawSun(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+function drawSun(ctx: CanvasRenderingContext2D, config: ResolvedConfig, state: AtmosphereState, width: number, height: number): void {
   const x = width * 0.75;
   const y = height * 0.18;
   const r = Math.min(width, height) * 0.08;
 
-  const outerGrad = ctx.createRadialGradient(x, y, r * 0.5, x, y, r * 3);
-  outerGrad.addColorStop(0, 'rgba(255,240,180,0.4)');
+  // softer, larger atmospheric halo
+  const outerGrad = ctx.createRadialGradient(x, y, r * 0.4, x, y, r * 4);
+  outerGrad.addColorStop(0, 'rgba(255,240,180,0.45)');
+  outerGrad.addColorStop(0.5, 'rgba(255,240,180,0.12)');
   outerGrad.addColorStop(1, 'rgba(255,240,180,0)');
   ctx.fillStyle = outerGrad;
-  ctx.fillRect(x - r * 3, y - r * 3, r * 6, r * 6);
+  ctx.fillRect(x - r * 4, y - r * 4, r * 8, r * 8);
+
+  if (config.fidelity === 'rich') {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(state.time * 0.05);
+    ctx.globalAlpha = 0.12;
+    ctx.strokeStyle = 'rgba(255,245,200,1)';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * r * 1.3, Math.sin(a) * r * 1.3);
+      ctx.lineTo(Math.cos(a) * r * 2.6, Math.sin(a) * r * 2.6);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
 
   const innerGrad = ctx.createRadialGradient(x, y, 0, x, y, r);
   innerGrad.addColorStop(0, '#fffde7');
@@ -245,13 +264,23 @@ function drawMoon(ctx: CanvasRenderingContext2D, width: number, height: number):
   ctx.arc(x, y, r, 0, Math.PI * 2);
   ctx.fill();
 
-  const glow = ctx.createRadialGradient(x, y, r, x, y, r * 2.5);
-  glow.addColorStop(0, 'rgba(255,248,220,0.2)');
-  glow.addColorStop(1, 'rgba(255,248,220,0)');
+  // cooler glow
+  const glow = ctx.createRadialGradient(x, y, r, x, y, r * 2.6);
+  glow.addColorStop(0, 'rgba(220,230,245,0.22)');
+  glow.addColorStop(1, 'rgba(220,230,245,0)');
   ctx.fillStyle = glow;
   ctx.beginPath();
-  ctx.arc(x, y, r * 2.5, 0, Math.PI * 2);
+  ctx.arc(x, y, r * 2.6, 0, Math.PI * 2);
   ctx.fill();
+
+  // 2–3 darker crater spots
+  ctx.fillStyle = 'rgba(180,185,200,0.35)';
+  const craters: Array<[number, number, number]> = [[-0.3, -0.2, 0.18], [0.25, 0.1, 0.13], [0.05, 0.35, 0.1]];
+  for (const [dx, dy, cr] of craters) {
+    ctx.beginPath();
+    ctx.arc(x + dx * r, y + dy * r, cr * r, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
 function buildPlumeSprite(radius: number, night: boolean): OffscreenCanvas {
