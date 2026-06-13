@@ -14,9 +14,11 @@ export class WeatherScene {
   private lastTimestamp: number | null = null;
   private engineState: EngineState | null = null;
   private resizeObserver: ResizeObserver;
+  private manual: boolean;
 
-  constructor(private container: HTMLElement) {
+  constructor(private container: HTMLElement, opts: { manual?: boolean } = {}) {
     if (!container) throw new Error('WeatherScene: container element is required');
+    this.manual = opts.manual ?? false;
 
     const pos = getComputedStyle(container).position;
     if (pos === 'static') container.style.position = 'relative';
@@ -51,10 +53,21 @@ export class WeatherScene {
 
     if (!this.engineState) {
       this.engineState = createEngineState(resolved, w, h);
-      this.startLoop();
+      if (!this.manual) this.startLoop();
     } else {
       this.engineState = startTransition(this.engineState, resolved, w, h);
     }
+  }
+
+  /** Deterministically tick + render N frames at a fixed delta (test hook). */
+  advance(frames: number, dtSeconds = 1 / 60): void {
+    if (this.destroyed || !this.engineState || !this.ctx) return;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    for (let i = 0; i < frames; i++) {
+      this.engineState = tickEngine(this.engineState, dtSeconds, w, h);
+    }
+    renderEngine(this.engineState, this.skyEl, this.ctx, w, h);
   }
 
   destroy(): void {
