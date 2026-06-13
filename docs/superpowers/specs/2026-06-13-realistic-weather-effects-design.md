@@ -2,13 +2,15 @@
 
 **Date:** 2026-06-13
 **Status:** Approved
-**Scope:** All 7 conditions, Canvas 2D only, new `fidelity` config option.
+**Scope:** All 8 conditions (incl. new `hail`), Canvas 2D only, new `fidelity` config option.
 
 ## Goal
 
 Make every weather state look noticeably more realistic while keeping the existing
 architecture (sky / clouds / particles / atmosphere modules, transition engine),
 the Canvas 2D rendering path, and the small bundle size. No breaking API changes.
+Also adds one new condition, `hail`, that follows the same conventions (depth,
+sprite principle, fidelity gating).
 
 ## 1. API & Architecture
 
@@ -20,10 +22,11 @@ the Canvas 2D rendering path, and the small bundle size. No breaking API changes
   - **Particle budget:** `subtle` ≈ current spawn rates, `rich` ≈ 1.8×.
     `POOL_SIZE` grows from 600 to 900 so `rich` + `heavy` (including splash
     particles, which share the pool) never starves.
-  - **Extra effects:** rain splashes, sun rays, lightning cloud under-lighting,
-    star glints, and wind leaf particles render only at `rich`.
+  - **Extra effects:** sun rays, lightning cloud under-lighting, star glints,
+    wind leaf particles, and **hail bounce** render only at `rich`.
 - Always-on regardless of fidelity (core realism, not decoration): particle
-  depth, time-of-day cloud lighting, animated fog.
+  depth, time-of-day cloud lighting, animated fog, and **rain splashes**
+  (gated by intensity, not fidelity — see Rain below).
 
 ### Particle depth
 
@@ -31,6 +34,13 @@ the Canvas 2D rendering path, and the small bundle size. No breaking API changes
 - Scales size, speed, and alpha linearly: far particles are small, slow, faint;
   near particles are large, fast, strong.
 - No new subsystem — one extra field plus scaling in the spawn/draw functions.
+- A second new field `bounces: number` on `Particle` (default 0) supports hail
+  bounce; ignored by all other conditions.
+
+### New condition: `hail`
+
+- Added to the `Condition` union and `VALID_CONDITIONS` → 8 conditions, 16 states.
+- No breaking API changes; behaves like any other condition.
 
 ### Cloud parallax
 
@@ -50,8 +60,27 @@ the Canvas 2D rendering path, and the small bundle size. No breaking API changes
 - Drops scattered in depth (far: short/slow/faint, near: long/fast/strong).
 - Fall angle follows a global wind value with a slow sinusoidal gust drift so
   the whole rain field "breathes".
-- `rich`: near drops hitting the bottom edge spawn a short-lived splash —
-  a small expanding ellipse ring, ~150 ms.
+- **Splash on impact, gated by intensity (not fidelity):** at `medium`/`heavy`,
+  drops hitting the bottom edge spawn a short-lived splash — a small expanding
+  ellipse ring, ~150 ms. At `light`: no splash (too little visible rain).
+  Storm rain (heavy-equivalent) gets splashes too.
+- `rich` strengthens the splash: more near drops produce a ring, and rings are
+  larger. `rich` does not enable splashes — intensity does.
+- A raindrop splashes; it does not bounce (a velocity reflection would read as
+  rubber balls). Bounce is reserved for solid hail.
+
+### Hail
+- Solid icy spheres: drawn as filled circles with a faint rim shimmer, falling
+  fast and near-vertically (slight wind offset). Sparser than rain (~90·scale
+  spawn rate).
+- Scattered in depth like all particles (far: small/slow/faint, near:
+  large/fast/bright).
+- Backdrop: own dark grey-green sky palette (between `rain` and `storm`), dense
+  dark clouds (~0.85 opacity), **no lightning**.
+- `rich`: stones hitting the bottom edge **bounce** — `vy` reflects with damping
+  (≈ −0.4), a small horizontal kick, size shrinks slightly; the stone dies after
+  1–2 bounces or once the rebound velocity is negligible. At `subtle`: the stone
+  disappears at the bottom edge like rain.
 
 ### Snow
 - Per-flake flutter frequency and amplitude (replaces the current global
@@ -99,9 +128,9 @@ the Canvas 2D rendering path, and the small bundle size. No breaking API changes
   "advance N frames" hook so snapshots are reproducible instead of random.
 
 ### Unit tests
-- New pure math (depth scaling, splash lifecycle, gust drift, fog bob offsets)
-  gets Vitest coverage alongside the existing `math` / `particles` /
-  `transition` tests.
+- New pure math (depth scaling, splash lifecycle, splash intensity gate, hail
+  bounce lifecycle, gust drift, fog bob offsets) gets Vitest coverage alongside
+  the existing `math` / `particles` / `transition` tests.
 
 ### Performance guardrails
 - Sprite principle everywhere: expensive shapes (clouds, fog plumes) render
@@ -112,18 +141,20 @@ the Canvas 2D rendering path, and the small bundle size. No breaking API changes
 
 ### Demo
 - Fourth button row: `Subtle | Rich`.
-- New baselines for all 14 states, plus rich variants of the most distinctive
-  ones (rain, storm, fog).
+- `Hail` button added to the condition row.
+- New baselines for all 16 states, plus rich variants of the most distinctive
+  ones (rain, storm, fog, hail).
 
 ### Implementation order
 Each step committed and visually verified on its own:
 1. Deterministic test mode & baseline fix
 2. `fidelity` API
 3. Particle depth (rain/snow)
-4. Splashes & gust drift
-5. Cloud upgrade (shapes, lighting, parallax)
-6. Fog rewrite
-7. Storm/lightning
-8. Sun/moon/stars
-9. Wind
-10. Final baselines
+4. Splashes (intensity-gated) & gust drift
+5. Hail (palette, dark clouds, depth-aware stones, fidelity-gated bounce)
+6. Cloud upgrade (shapes, lighting, parallax)
+7. Fog rewrite
+8. Storm/lightning
+9. Sun/moon/stars
+10. Wind
+11. Final baselines
