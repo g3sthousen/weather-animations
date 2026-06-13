@@ -3,7 +3,7 @@ import { resolveConfig } from './types';
 import { createEngineState, startTransition, tickEngine, renderEngine } from './engine';
 import type { EngineState } from './engine';
 
-export type { WeatherConfig, Condition, Intensity, TimeOfDay, Fidelity } from './types';
+export type { WeatherConfig, Condition, Intensity, TimeOfDay, Fidelity, MoonPhase } from './types';
 
 export class WeatherScene {
   private destroyed = false;

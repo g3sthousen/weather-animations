@@ -1,27 +1,38 @@
 var J = Object.defineProperty;
-var Z = (n, t, o) => t in n ? J(n, t, { enumerable: !0, configurable: !0, writable: !0, value: o }) : n[t] = o;
-var p = (n, t, o) => Z(n, typeof t != "symbol" ? t + "" : t, o);
-const j = ["clear", "cloudy", "rain", "snow", "storm", "fog", "wind", "hail"];
-function Q(n) {
+var Z = (n, t, e) => t in n ? J(n, t, { enumerable: !0, configurable: !0, writable: !0, value: e }) : n[t] = e;
+var p = (n, t, e) => Z(n, typeof t != "symbol" ? t + "" : t, e);
+const j = ["clear", "cloudy", "rain", "snow", "storm", "fog", "wind", "hail"], Q = [
+  "new",
+  "waxing-crescent",
+  "first-quarter",
+  "waxing-gibbous",
+  "full",
+  "waning-gibbous",
+  "last-quarter",
+  "waning-crescent"
+];
+function x(n) {
+  const t = j.includes(n.condition) ? n.condition : "clear", e = Q.includes(n.moonPhase) ? n.moonPhase : "full";
   return {
-    condition: j.includes(n.condition) ? n.condition : "clear",
+    condition: t,
     intensity: n.intensity ?? "medium",
     time: n.time ?? "day",
     transitionMs: n.transitionMs ?? 1200,
-    fidelity: n.fidelity ?? "subtle"
+    fidelity: n.fidelity ?? "subtle",
+    moonPhase: e
   };
 }
-function v(n, t, o) {
-  const e = Math.max(0, Math.min(1, o));
-  return n + (t - n) * e;
+function P(n, t, e) {
+  const o = Math.max(0, Math.min(1, e));
+  return n + (t - n) * o;
 }
-function F(n, t, o) {
-  return Math.max(t, Math.min(o, n));
+function L(n, t, e) {
+  return Math.max(t, Math.min(e, n));
 }
-function x(n) {
+function nn(n) {
   return n < 0.5 ? 4 * n * n * n : 1 - Math.pow(-2 * n + 2, 3) / 2;
 }
-function d(n) {
+function f(n) {
   const t = n.replace("#", "");
   return {
     r: parseInt(t.substring(0, 2), 16),
@@ -29,94 +40,94 @@ function d(n) {
     b: parseInt(t.substring(4, 6), 16)
   };
 }
-function L(n, t, o) {
+function F(n, t, e) {
   return {
-    r: Math.round(v(n.r, t.r, o)),
-    g: Math.round(v(n.g, t.g, o)),
-    b: Math.round(v(n.b, t.b, o))
+    r: Math.round(P(n.r, t.r, e)),
+    g: Math.round(P(n.g, t.g, e)),
+    b: Math.round(P(n.b, t.b, e))
   };
 }
 function w(n) {
   return `rgb(${n.r},${n.g},${n.b})`;
 }
-const nn = {
-  "clear:day": { top: d("#1a6b9e"), bottom: d("#87ceeb") },
-  "clear:night": { top: d("#0a0a2e"), bottom: d("#1a1a4e") },
-  "cloudy:day": { top: d("#6b7a8d"), bottom: d("#b0bec5") },
-  "cloudy:night": { top: d("#1c2331"), bottom: d("#2d3a4a") },
-  "rain:day": { top: d("#3d5166"), bottom: d("#607d8b") },
-  "rain:night": { top: d("#1a202c"), bottom: d("#2d3748") },
-  "snow:day": { top: d("#b0bec5"), bottom: d("#e8eef4") },
-  "snow:night": { top: d("#1a1a3a"), bottom: d("#2d2d50") },
-  "storm:day": { top: d("#1a1a2e"), bottom: d("#16213e") },
-  "storm:night": { top: d("#0a0a0f"), bottom: d("#11111b") },
-  "fog:day": { top: d("#c8cdd2"), bottom: d("#e8eaed") },
-  "fog:night": { top: d("#374151"), bottom: d("#4b5563") },
-  "wind:day": { top: d("#2563a8"), bottom: d("#93c5fd") },
-  "wind:night": { top: d("#1e3a5f"), bottom: d("#1e3a8a") },
-  "hail:day": { top: d("#2f3b3a"), bottom: d("#4a5a55") },
-  "hail:night": { top: d("#141c1b"), bottom: d("#212e2b") }
+const tn = {
+  "clear:day": { top: f("#1a6b9e"), bottom: f("#87ceeb") },
+  "clear:night": { top: f("#0a0a2e"), bottom: f("#1a1a4e") },
+  "cloudy:day": { top: f("#6b7a8d"), bottom: f("#b0bec5") },
+  "cloudy:night": { top: f("#1c2331"), bottom: f("#2d3a4a") },
+  "rain:day": { top: f("#3d5166"), bottom: f("#607d8b") },
+  "rain:night": { top: f("#1a202c"), bottom: f("#2d3748") },
+  "snow:day": { top: f("#b0bec5"), bottom: f("#e8eef4") },
+  "snow:night": { top: f("#1a1a3a"), bottom: f("#2d2d50") },
+  "storm:day": { top: f("#1a1a2e"), bottom: f("#16213e") },
+  "storm:night": { top: f("#0a0a0f"), bottom: f("#11111b") },
+  "fog:day": { top: f("#c8cdd2"), bottom: f("#e8eaed") },
+  "fog:night": { top: f("#374151"), bottom: f("#4b5563") },
+  "wind:day": { top: f("#2563a8"), bottom: f("#93c5fd") },
+  "wind:night": { top: f("#1e3a5f"), bottom: f("#1e3a8a") },
+  "hail:day": { top: f("#2f3b3a"), bottom: f("#4a5a55") },
+  "hail:night": { top: f("#141c1b"), bottom: f("#212e2b") }
 };
 function E(n) {
-  return nn[`${n.condition}:${n.time}`];
+  return tn[`${n.condition}:${n.time}`];
 }
 function O(n, t) {
   return {
-    r: Math.round(v(n.r, 255, t)),
-    g: Math.round(v(n.g, 255, t)),
-    b: Math.round(v(n.b, 255, t))
+    r: Math.round(P(n.r, 255, t)),
+    g: Math.round(P(n.g, 255, t)),
+    b: Math.round(P(n.b, 255, t))
   };
 }
-function tn(n, t, o = 0) {
-  const e = E(t), i = o > 0 ? O(e.top, o * 0.4) : e.top, r = o > 0 ? O(e.bottom, o * 0.4) : e.bottom;
+function en(n, t, e = 0) {
+  const o = E(t), i = e > 0 ? O(o.top, e * 0.4) : o.top, r = e > 0 ? O(o.bottom, e * 0.4) : o.bottom;
   n.style.background = `linear-gradient(to bottom, ${w(i)}, ${w(r)})`;
 }
-function on(n, t, o, e) {
-  const i = E(t), r = E(o), s = w(L(i.top, r.top, e)), h = w(L(i.bottom, r.bottom, e));
+function on(n, t, e, o) {
+  const i = E(t), r = E(e), s = w(F(i.top, r.top, o)), h = w(F(i.bottom, r.bottom, o));
   n.style.background = `linear-gradient(to bottom, ${s}, ${h})`;
 }
-let en = Math.random;
+let rn = Math.random;
 function l() {
-  return en();
+  return rn();
 }
-const R = [6e-3, 0.022, 0.06], rn = { 0: 4, 1: 5, 2: 6 }, sn = { light: 0.55, medium: 1, heavy: 1.5 }, an = { light: 0.75, medium: 1, heavy: 1.2 };
+const R = [6e-3, 0.022, 0.06], sn = { 0: 4, 1: 5, 2: 6 }, an = { light: 0.55, medium: 1, heavy: 1.5 }, ln = { light: 0.75, medium: 1, heavy: 1.2 };
 function A(n, t) {
   return n.condition === "storm" ? n.time === "night" ? `rgba(26,26,42,${t})` : `rgba(42,42,58,${t})` : n.condition === "hail" ? n.time === "night" ? `rgba(40,52,50,${t})` : `rgba(70,86,82,${t})` : n.condition === "rain" ? n.time === "night" ? `rgba(58,74,90,${t})` : `rgba(106,122,138,${t})` : n.time === "night" ? `rgba(58,74,106,${t})` : `rgba(208,216,224,${t})`;
 }
 function B(n, t) {
-  const o = n.condition === "storm" ? 0.9 : n.condition === "hail" ? 0.85 : n.condition === "rain" ? 0.75 : n.condition === "wind" ? 0.55 : n.condition === "cloudy" ? 0.7 : 0.5;
-  return Math.min(0.95, o * (1 - t * 0.12) * an[n.intensity]);
+  const e = n.condition === "storm" ? 0.9 : n.condition === "hail" ? 0.85 : n.condition === "rain" ? 0.75 : n.condition === "wind" ? 0.55 : n.condition === "cloudy" ? 0.7 : 0.5;
+  return Math.min(0.95, e * (1 - t * 0.12) * ln[n.intensity]);
 }
-function ln(n) {
+function hn(n) {
   return n !== "clear" && n !== "fog";
 }
-function W(n, t, o) {
-  const e = n / 2, i = t / 2, r = e / i, s = Math.max(4, Math.min(9, Math.round(2 + r * 1.8))), h = o ? 2.4 : 1.8, u = h / Math.max(1, s - 1), c = [];
-  for (let f = 0; f < s; f++) {
-    const a = s === 1 ? 0.5 : f / (s - 1), g = (a - 0.5) * h + (l() * 2 - 1) * u * 0.15, S = 1 - Math.abs(a - 0.5) * 2, M = Math.min(1.1, 0.62 + S * (o ? 0.18 : 0.42) + (l() * 0.3 - 0.15)), k = 1 - M + l() * 0.08 + (l() * 0.2 - 0.1);
-    c.push({ dx: g, dy: k, r: M });
+function W(n, t, e) {
+  const o = n / 2, i = t / 2, r = o / i, s = Math.max(4, Math.min(9, Math.round(2 + r * 1.8))), h = e ? 2.4 : 1.8, u = h / Math.max(1, s - 1), c = [];
+  for (let d = 0; d < s; d++) {
+    const a = s === 1 ? 0.5 : d / (s - 1), b = (a - 0.5) * h + (l() * 2 - 1) * u * 0.15, y = 1 - Math.abs(a - 0.5) * 2, M = Math.min(1.1, 0.62 + y * (e ? 0.18 : 0.42) + (l() * 0.3 - 0.15)), k = 1 - M + l() * 0.08 + (l() * 0.2 - 0.1);
+    c.push({ dx: b, dy: k, r: M });
   }
-  if (!o && s >= 5) {
-    const f = l() < 0.5 ? 1 : 2;
-    for (let a = 0; a < f; a++) {
-      const g = (0.3 + l() * 0.4 - 0.5) * h * 0.8, S = Math.min(1.15, 0.85 + l() * 0.2), C = 1 - S + 0.05 + l() * 0.1;
-      c.push({ dx: g, dy: C, r: S, alpha: 0.45 });
+  if (!e && s >= 5) {
+    const d = l() < 0.5 ? 1 : 2;
+    for (let a = 0; a < d; a++) {
+      const b = (0.3 + l() * 0.4 - 0.5) * h * 0.8, y = Math.min(1.15, 0.85 + l() * 0.2), v = 1 - y + 0.05 + l() * 0.1;
+      c.push({ dx: b, dy: v, r: y, alpha: 0.45 });
     }
   }
   return c;
 }
-function q(n, t, o) {
-  if (!ln(n.condition)) return [];
-  const e = [], i = sn[n.intensity];
+function D(n, t, e) {
+  if (!hn(n.condition)) return [];
+  const o = [], i = an[n.intensity];
   if (n.condition === "storm") {
     const s = [2, 2, 3];
     for (const h of [0, 1, 2]) {
       const u = Math.max(1, Math.round(s[h] * i)), c = 1 + h * 0.4;
-      for (let f = 0; f < u; f++) {
-        const a = t * (0.18 + l() * 0.14) * c, m = o * (0.3 + l() * 0.2) * c;
-        e.push({
-          x: f / u * t * 1.3 - t * 0.15,
-          y: o * (h * 0.07 + l() * 0.05) - m * 0.15,
+      for (let d = 0; d < u; d++) {
+        const a = t * (0.18 + l() * 0.14) * c, m = e * (0.3 + l() * 0.2) * c;
+        o.push({
+          x: d / u * t * 1.3 - t * 0.15,
+          y: e * (h * 0.07 + l() * 0.05) - m * 0.15,
           width: a,
           height: m,
           alpha: B(n, h),
@@ -126,86 +137,86 @@ function q(n, t, o) {
         });
       }
     }
-    return e;
+    return o;
   }
   const r = n.condition === "wind" ? [2] : [0, 1, 2];
   for (const s of r) {
-    const h = n.condition === "wind" ? 8 : rn[s], u = Math.max(2, Math.round(h * i));
+    const h = n.condition === "wind" ? 8 : sn[s], u = Math.max(2, Math.round(h * i));
     for (let c = 0; c < u; c++) {
-      const f = n.condition === "wind", a = 1 + s * 0.35, m = f ? t * (0.15 + l() * 0.12) : t * (0.22 + l() * 0.18) * a, g = f ? o * 0.04 : o * (0.12 + l() * 0.08) * a;
-      e.push({
+      const d = n.condition === "wind", a = 1 + s * 0.35, m = d ? t * (0.15 + l() * 0.12) : t * (0.22 + l() * 0.18) * a, b = d ? e * 0.04 : e * (0.12 + l() * 0.08) * a;
+      o.push({
         x: c / u * t * 1.4 - t * 0.2,
-        y: o * (0.04 + s * 0.18 + l() * 0.08),
+        y: e * (0.04 + s * 0.18 + l() * 0.08),
         width: m,
-        height: g,
+        height: b,
         alpha: B(n, s),
-        speed: R[s] * (f ? 3 : 1) * t,
+        speed: R[s] * (d ? 3 : 1) * t,
         layer: s,
-        lobes: f ? [] : W(m, g, l() < 0.35)
+        lobes: d ? [] : W(m, b, l() < 0.35)
       });
     }
   }
-  return e;
+  return o;
 }
-function _(n, t, o) {
-  for (const e of n)
-    e.x += e.speed * t, e.x > o + e.width / 2 && (e.x = -e.width / 2);
+function _(n, t, e) {
+  for (const o of n)
+    o.x += o.speed * t, o.x > e + o.width / 2 && (o.x = -o.width / 2);
 }
-function hn(n, t) {
-  const o = n.width / 2, e = n.height / 2, i = Math.max(2, e * 0.12), r = i * 4 + Math.max(e, o * 0.15), s = Math.ceil(n.width + r * 2), h = Math.ceil(n.height + r * 2), u = new OffscreenCanvas(s, h), c = u.getContext("2d"), f = s / 2, a = h / 2;
-  if (n.spriteCx = f, n.spriteCy = a, n.lobes.length === 0) {
-    c.filter = `blur(${i}px)`, c.translate(f, a), c.scale(o / e, 1);
-    const y = c.createRadialGradient(0, 0, 0, 0, 0, e);
-    return y.addColorStop(0, A(t, 1)), y.addColorStop(0.4, A(t, 0.6)), y.addColorStop(1, "rgba(0,0,0,0)"), c.fillStyle = y, c.beginPath(), c.arc(0, 0, e, 0, Math.PI * 2), c.fill(), u;
+function cn(n, t) {
+  const e = n.width / 2, o = n.height / 2, i = Math.max(2, o * 0.12), r = i * 4 + Math.max(o, e * 0.15), s = Math.ceil(n.width + r * 2), h = Math.ceil(n.height + r * 2), u = new OffscreenCanvas(s, h), c = u.getContext("2d"), d = s / 2, a = h / 2;
+  if (n.spriteCx = d, n.spriteCy = a, n.lobes.length === 0) {
+    c.filter = `blur(${i}px)`, c.translate(d, a), c.scale(e / o, 1);
+    const S = c.createRadialGradient(0, 0, 0, 0, 0, o);
+    return S.addColorStop(0, A(t, 1)), S.addColorStop(0.4, A(t, 0.6)), S.addColorStop(1, "rgba(0,0,0,0)"), c.fillStyle = S, c.beginPath(), c.arc(0, 0, o, 0, Math.PI * 2), c.fill(), u;
   }
-  const m = new OffscreenCanvas(s, h), g = m.getContext("2d");
-  g.fillStyle = A(t, 1);
-  for (const y of n.lobes) {
-    const U = f + y.dx * o, V = a + y.dy * e;
-    g.beginPath(), g.arc(U, V, y.r * e, 0, Math.PI * 2), g.fill();
+  const m = new OffscreenCanvas(s, h), b = m.getContext("2d");
+  b.fillStyle = A(t, 1);
+  for (const S of n.lobes) {
+    const U = d + S.dx * e, V = a + S.dy * o;
+    b.beginPath(), b.arc(U, V, S.r * o, 0, Math.PI * 2), b.fill();
   }
   c.filter = `blur(${i}px)`, c.drawImage(m, 0, 0), c.filter = "none", c.globalCompositeOperation = "source-atop";
-  const S = t.time === "day", C = t.condition === "rain" || t.condition === "storm" || t.condition === "hail", M = S ? "rgba(255,244,214,0.22)" : "rgba(190,205,235,0.10)", k = C ? "rgba(0,0,0,0.35)" : S ? "rgba(0,0,0,0.16)" : "rgba(0,0,0,0.28)", P = c.createLinearGradient(0, a - e * 1.1, 0, a + e * 1.1);
-  return P.addColorStop(0, M), P.addColorStop(0.5, "rgba(255,255,255,0)"), P.addColorStop(1, k), c.fillStyle = P, c.fillRect(0, 0, s, h), c.globalCompositeOperation = "source-over", u;
+  const y = t.time === "day", v = t.condition === "rain" || t.condition === "storm" || t.condition === "hail", M = y ? "rgba(255,244,214,0.22)" : "rgba(190,205,235,0.10)", k = v ? "rgba(0,0,0,0.35)" : y ? "rgba(0,0,0,0.16)" : "rgba(0,0,0,0.28)", C = c.createLinearGradient(0, a - o * 1.1, 0, a + o * 1.1);
+  return C.addColorStop(0, M), C.addColorStop(0.5, "rgba(255,255,255,0)"), C.addColorStop(1, k), c.fillStyle = C, c.fillRect(0, 0, s, h), c.globalCompositeOperation = "source-over", u;
 }
-function I(n, t, o, e) {
+function I(n, t, e, o) {
   if (t.length !== 0) {
     n.save();
     for (const i of t) {
-      const r = `${o.condition}:${o.time}`;
-      (!i.sprite || i.spriteKey !== r) && (i.sprite = hn(i, o), i.spriteKey = r), n.globalAlpha = e * i.alpha, n.drawImage(i.sprite, i.x - (i.spriteCx ?? 0), i.y - (i.spriteCy ?? 0));
+      const r = `${e.condition}:${e.time}`;
+      (!i.sprite || i.spriteKey !== r) && (i.sprite = cn(i, e), i.spriteKey = r), n.globalAlpha = o * i.alpha, n.drawImage(i.sprite, i.x - (i.spriteCx ?? 0), i.y - (i.spriteCy ?? 0));
     }
     n.restore();
   }
 }
-function cn(n, t, o, e, i) {
-  return t + o * Math.sin(n * e + i);
+function un(n, t, e, o, i) {
+  return t + e * Math.sin(n * o + i);
 }
-const un = {
+const dn = {
   light: 0.45,
   medium: 0.22,
   heavy: 0
 };
-function dn(n) {
-  return n.condition === "cloudy" ? un[n.intensity] : n.time === "day" && (n.condition === "clear" || n.condition === "wind") || n.time === "night" && n.condition === "clear" ? 1 : 0;
+function fn(n) {
+  return n.condition === "cloudy" ? dn[n.intensity] : n.time === "day" && (n.condition === "clear" || n.condition === "wind") || n.time === "night" && n.condition === "clear" ? 1 : 0;
 }
-function D() {
+function X() {
   return { lightningFlash: 0, lightningTimer: 2e3, boltPoints: null, time: 0, fogPlumes: null, preflicker: 0, boltBranches: null };
 }
-function N(n, t, o) {
-  if (n.time += o, t.condition === "storm") {
-    if (n.lightningTimer -= o * 1e3, n.lightningTimer <= 0 && n.preflicker <= 0 && n.lightningFlash <= 0 && (n.preflicker = 1), n.preflicker > 0 && (n.preflicker = Math.max(0, n.preflicker - o * 12), n.preflicker <= 0)) {
+function N(n, t, e) {
+  if (n.time += e, t.condition === "storm") {
+    if (n.lightningTimer -= e * 1e3, n.lightningTimer <= 0 && n.preflicker <= 0 && n.lightningFlash <= 0 && (n.preflicker = 1), n.preflicker > 0 && (n.preflicker = Math.max(0, n.preflicker - e * 12), n.preflicker <= 0)) {
       n.lightningFlash = 1;
-      const e = t.intensity === "heavy" ? 1500 : t.intensity === "medium" ? 2500 : 4e3;
-      n.lightningTimer = e + l() * e;
-      const i = fn();
-      n.boltPoints = i, n.boltBranches = pn(i);
+      const o = t.intensity === "heavy" ? 1500 : t.intensity === "medium" ? 2500 : 4e3;
+      n.lightningTimer = o + l() * o;
+      const i = pn();
+      n.boltPoints = i, n.boltBranches = bn(i);
     }
-    n.lightningFlash = Math.max(0, n.lightningFlash - o * 3.5), n.lightningFlash <= 0 && (n.boltPoints = null, n.boltBranches = null);
+    n.lightningFlash = Math.max(0, n.lightningFlash - e * 3.5), n.lightningFlash <= 0 && (n.boltPoints = null, n.boltBranches = null);
   } else
     n.lightningFlash = 0, n.lightningTimer = 2e3, n.boltPoints = null, n.preflicker = 0, n.boltBranches = null;
   if (t.condition === "fog") {
-    n.fogPlumes || (n.fogPlumes = Array.from({ length: 4 }, (e, i) => ({
+    n.fogPlumes || (n.fogPlumes = Array.from({ length: 4 }, (o, i) => ({
       baseX: l(),
       baseY: 0.45 + i * 0.14 + l() * 0.06,
       speed: 0.01 + l() * 0.02,
@@ -213,62 +224,62 @@ function N(n, t, o) {
       bobFreq: 0.15 + l() * 0.15,
       phase: l() * Math.PI * 2
     })));
-    for (const e of n.fogPlumes)
-      e.baseX += e.speed * o, e.baseX > 1.3 && (e.baseX -= 1.6);
+    for (const o of n.fogPlumes)
+      o.baseX += o.speed * e, o.baseX > 1.3 && (o.baseX -= 1.6);
   } else
     n.fogPlumes = null;
 }
-function T(n, t, o, e, i, r) {
-  n.save(), n.globalAlpha = e, t.condition === "fog" && yn(n, t, o, i, r);
-  const s = Math.max(o.lightningFlash, o.preflicker * 0.4);
-  if (s > 0 && (n.globalAlpha = e * s * 0.45, n.fillStyle = "rgba(200,220,255,1)", n.fillRect(0, 0, i, r), o.boltPoints && o.lightningFlash > 0 && (Y(n, o.boltPoints, e * o.lightningFlash, i, r), o.boltBranches)))
-    for (const h of o.boltBranches)
-      Y(n, h, e * o.lightningFlash * 0.7, i, r);
-  if (t.fidelity === "rich" && o.lightningFlash > 0 && t.condition === "storm") {
-    n.save(), n.globalCompositeOperation = "lighter", n.globalAlpha = e * o.lightningFlash * 0.5;
+function T(n, t, e, o, i, r) {
+  n.save(), n.globalAlpha = o, t.condition === "fog" && Pn(n, t, e, i, r);
+  const s = Math.max(e.lightningFlash, e.preflicker * 0.4);
+  if (s > 0 && (n.globalAlpha = o * s * 0.45, n.fillStyle = "rgba(200,220,255,1)", n.fillRect(0, 0, i, r), e.boltPoints && e.lightningFlash > 0 && (q(n, e.boltPoints, o * e.lightningFlash, i, r), e.boltBranches)))
+    for (const h of e.boltBranches)
+      q(n, h, o * e.lightningFlash * 0.7, i, r);
+  if (t.fidelity === "rich" && e.lightningFlash > 0 && t.condition === "storm") {
+    n.save(), n.globalCompositeOperation = "lighter", n.globalAlpha = o * e.lightningFlash * 0.5;
     const h = n.createLinearGradient(0, 0, 0, r * 0.5);
     h.addColorStop(0, "rgba(150,180,255,0.6)"), h.addColorStop(1, "rgba(150,180,255,0)"), n.fillStyle = h, n.fillRect(0, 0, i, r * 0.5), n.restore();
   }
   n.restore();
 }
-function z(n, t, o, e, i, r) {
-  const s = dn(t);
-  s <= 0 || (n.save(), n.globalAlpha = e * s, t.time === "day" ? bn(n, t, o, i, r) : mn(n, i, r), n.restore());
+function z(n, t, e, o, i, r) {
+  const s = fn(t);
+  s <= 0 || (n.save(), n.globalAlpha = o * s, t.time === "day" ? mn(n, t, e, i, r) : gn(n, t, i, r), n.restore());
 }
-function fn() {
+function pn() {
   const n = 0.2 + l() * 0.6, t = [[n, 0.08]];
-  let o = n;
-  for (let e = 1; e <= 8; e++)
-    o += (l() - 0.5) * 0.13, o = Math.max(0.05, Math.min(0.95, o)), t.push([o, 0.08 + 0.52 * e / 8]);
+  let e = n;
+  for (let o = 1; o <= 8; o++)
+    e += (l() - 0.5) * 0.13, e = Math.max(0.05, Math.min(0.95, e)), t.push([e, 0.08 + 0.52 * o / 8]);
   return t;
 }
-function pn(n) {
-  const t = [], o = 1 + Math.floor(l() * 2);
-  for (let e = 0; e < o; e++) {
+function bn(n) {
+  const t = [], e = 1 + Math.floor(l() * 2);
+  for (let o = 0; o < e; o++) {
     const i = 2 + Math.floor(l() * (n.length - 3)), [r, s] = n[i];
     let h = r, u = s;
-    const c = [[h, u]], f = l() < 0.5 ? -1 : 1;
+    const c = [[h, u]], d = l() < 0.5 ? -1 : 1;
     for (let a = 0; a < 3; a++)
-      h = Math.max(0.02, Math.min(0.98, h + f * (0.04 + l() * 0.05))), u = Math.min(0.95, u + 0.06 + l() * 0.05), c.push([h, u]);
+      h = Math.max(0.02, Math.min(0.98, h + d * (0.04 + l() * 0.05))), u = Math.min(0.95, u + 0.06 + l() * 0.05), c.push([h, u]);
     t.push(c);
   }
   return t;
 }
-function Y(n, t, o, e, i) {
-  n.save(), n.globalAlpha = o, n.lineCap = "round", n.lineJoin = "round";
+function q(n, t, e, o, i) {
+  n.save(), n.globalAlpha = e, n.lineCap = "round", n.lineJoin = "round";
   const r = () => {
-    n.beginPath(), n.moveTo(t[0][0] * e, t[0][1] * i);
+    n.beginPath(), n.moveTo(t[0][0] * o, t[0][1] * i);
     for (let s = 1; s < t.length; s++)
-      n.lineTo(t[s][0] * e, t[s][1] * i);
+      n.lineTo(t[s][0] * o, t[s][1] * i);
   };
   r(), n.strokeStyle = "rgba(140,180,255,0.5)", n.lineWidth = 10, n.shadowColor = "#90b8ff", n.shadowBlur = 30, n.stroke(), r(), n.strokeStyle = "rgba(200,220,255,0.85)", n.lineWidth = 3.5, n.shadowBlur = 12, n.stroke(), r(), n.strokeStyle = "#ffffff", n.lineWidth = 1.5, n.shadowBlur = 0, n.stroke(), n.restore();
 }
-function bn(n, t, o, e, i) {
-  const r = e * 0.75, s = i * 0.18, h = Math.min(e, i) * 0.08, u = n.createRadialGradient(r, s, h * 0.4, r, s, h * 4);
+function mn(n, t, e, o, i) {
+  const r = o * 0.75, s = i * 0.18, h = Math.min(o, i) * 0.08, u = n.createRadialGradient(r, s, h * 0.4, r, s, h * 4);
   if (u.addColorStop(0, "rgba(255,240,180,0.45)"), u.addColorStop(0.5, "rgba(255,240,180,0.12)"), u.addColorStop(1, "rgba(255,240,180,0)"), n.fillStyle = u, n.fillRect(r - h * 4, s - h * 4, h * 8, h * 8), t.fidelity === "rich") {
-    n.save(), n.translate(r, s), n.rotate(o.time * 0.05), n.globalAlpha = 0.12, n.strokeStyle = "rgba(255,245,200,1)", n.lineWidth = 2;
-    for (let f = 0; f < 12; f++) {
-      const a = f / 12 * Math.PI * 2;
+    n.save(), n.translate(r, s), n.rotate(e.time * 0.05), n.globalAlpha = 0.12, n.strokeStyle = "rgba(255,245,200,1)", n.lineWidth = 2;
+    for (let d = 0; d < 12; d++) {
+      const a = d / 12 * Math.PI * 2;
       n.beginPath(), n.moveTo(Math.cos(a) * h * 1.3, Math.sin(a) * h * 1.3), n.lineTo(Math.cos(a) * h * 2.6, Math.sin(a) * h * 2.6), n.stroke();
     }
     n.restore();
@@ -276,29 +287,75 @@ function bn(n, t, o, e, i) {
   const c = n.createRadialGradient(r, s, 0, r, s, h);
   c.addColorStop(0, "#fffde7"), c.addColorStop(1, "#ffe082"), n.fillStyle = c, n.beginPath(), n.arc(r, s, h, 0, Math.PI * 2), n.fill();
 }
-function mn(n, t, o) {
-  const e = t * 0.75, i = o * 0.18, r = Math.min(t, o) * 0.06, s = n.createRadialGradient(e - r * 0.2, i - r * 0.2, 0, e, i, r);
-  s.addColorStop(0, "#fffde7"), s.addColorStop(0.6, "#fff8e1"), s.addColorStop(1, "#ffecb3"), n.fillStyle = s, n.beginPath(), n.arc(e, i, r, 0, Math.PI * 2), n.fill();
-  const h = n.createRadialGradient(e, i, r, e, i, r * 2.6);
-  h.addColorStop(0, "rgba(220,230,245,0.22)"), h.addColorStop(1, "rgba(220,230,245,0)"), n.fillStyle = h, n.beginPath(), n.arc(e, i, r * 2.6, 0, Math.PI * 2), n.fill(), n.fillStyle = "rgba(180,185,200,0.35)";
-  const u = [[-0.3, -0.2, 0.18], [0.25, 0.1, 0.13], [0.05, 0.35, 0.1]];
-  for (const [c, f, a] of u)
-    n.beginPath(), n.arc(e + c * r, i + f * r, a * r, 0, Math.PI * 2), n.fill();
+function gn(n, t, e, o) {
+  const i = e * 0.75, r = o * 0.18, s = Math.min(e, o) * 0.06, h = t.moonPhase, u = h === "new";
+  if (!u) {
+    const b = n.createRadialGradient(i, r, s, i, r, s * 2.6);
+    b.addColorStop(0, "rgba(220,230,245,0.22)"), b.addColorStop(1, "rgba(220,230,245,0)"), n.fillStyle = b, n.beginPath(), n.arc(i, r, s * 2.6, 0, Math.PI * 2), n.fill();
+  }
+  const c = n.createRadialGradient(i - s * 0.15, r - s * 0.2, 0, i, r, s);
+  if (c.addColorStop(0, u ? "rgba(155,165,185,0.18)" : "rgba(70,76,92,0.55)"), c.addColorStop(1, u ? "rgba(100,110,130,0.13)" : "rgba(38,44,58,0.6)"), n.fillStyle = c, n.beginPath(), n.arc(i, r, s, 0, Math.PI * 2), n.fill(), u) {
+    n.strokeStyle = "rgba(190,200,220,0.14)", n.lineWidth = Math.max(1, s * 0.035), n.beginPath(), n.arc(i, r, s, 0, Math.PI * 2), n.stroke();
+    return;
+  }
+  n.save(), yn(n, i, r, s, h), n.clip();
+  const d = n.createRadialGradient(i - s * 0.2, r - s * 0.2, 0, i, r, s);
+  d.addColorStop(0, "#fffde7"), d.addColorStop(0.6, "#fff8e1"), d.addColorStop(1, "#ffecb3"), n.fillStyle = d, n.beginPath(), n.arc(i, r, s, 0, Math.PI * 2), n.fill();
+  const a = h === "waxing-crescent" || h === "waning-crescent" ? 0.18 : 0.35;
+  n.fillStyle = `rgba(180,185,200,${a})`;
+  const m = [[-0.3, -0.2, 0.18], [0.25, 0.1, 0.13], [0.05, 0.35, 0.1]];
+  for (const [b, y, v] of m)
+    n.beginPath(), n.arc(i + b * s, r + y * s, v * s, 0, Math.PI * 2), n.fill();
+  n.restore();
 }
-function gn(n, t) {
-  const o = Math.ceil(n * 2), e = new OffscreenCanvas(o, o), i = e.getContext("2d"), r = t ? "90,100,112" : "205,210,216", s = i.createRadialGradient(n, n, 0, n, n, n);
-  return s.addColorStop(0, `rgba(${r},0.5)`), s.addColorStop(0.5, `rgba(${r},0.22)`), s.addColorStop(1, `rgba(${r},0)`), i.fillStyle = s, i.beginPath(), i.arc(n, n, n, 0, Math.PI * 2), i.fill(), e;
+function yn(n, t, e, o, i) {
+  const r = Sn(i);
+  if (n.beginPath(), r.kind === "full") {
+    n.arc(t, e, o, 0, Math.PI * 2);
+    return;
+  }
+  const s = r.side;
+  if (n.moveTo(t, e - o), n.arc(t, e, o, -Math.PI / 2, Math.PI / 2, s < 0), r.kind === "quarter")
+    n.lineTo(t, e - o);
+  else {
+    const h = r.kind === "crescent" ? 0.62 : -0.42, u = t + s * o * h;
+    n.bezierCurveTo(u, e + o * 0.7, u, e - o * 0.7, t, e - o);
+  }
+  n.closePath();
 }
-function yn(n, t, o, e, i) {
-  if (!o.fogPlumes) return;
-  const r = t.time === "night", s = e * 0.4;
-  for (const h of o.fogPlumes) {
-    (!h.sprite || h.spriteR !== s) && (h.sprite = gn(s, r), h.spriteR = s);
-    const u = h.baseX * e - s, c = cn(o.time, h.baseY * i, h.bobAmp, h.bobFreq, h.phase) - s;
-    n.drawImage(h.sprite, u, c), h.baseX * e - s > e - s * 2 && n.drawImage(h.sprite, u - e - s * 2, c);
+function Sn(n) {
+  switch (n) {
+    case "waxing-crescent":
+      return { kind: "crescent", side: 1 };
+    case "first-quarter":
+      return { kind: "quarter", side: 1 };
+    case "waxing-gibbous":
+      return { kind: "gibbous", side: 1 };
+    case "waning-gibbous":
+      return { kind: "gibbous", side: -1 };
+    case "last-quarter":
+      return { kind: "quarter", side: -1 };
+    case "waning-crescent":
+      return { kind: "crescent", side: -1 };
+    case "full":
+    case "new":
+      return { kind: "full" };
   }
 }
-class Sn {
+function vn(n, t) {
+  const e = Math.ceil(n * 2), o = new OffscreenCanvas(e, e), i = o.getContext("2d"), r = t ? "90,100,112" : "205,210,216", s = i.createRadialGradient(n, n, 0, n, n, n);
+  return s.addColorStop(0, `rgba(${r},0.5)`), s.addColorStop(0.5, `rgba(${r},0.22)`), s.addColorStop(1, `rgba(${r},0)`), i.fillStyle = s, i.beginPath(), i.arc(n, n, n, 0, Math.PI * 2), i.fill(), o;
+}
+function Pn(n, t, e, o, i) {
+  if (!e.fogPlumes) return;
+  const r = t.time === "night", s = o * 0.4;
+  for (const h of e.fogPlumes) {
+    (!h.sprite || h.spriteR !== s) && (h.sprite = vn(s, r), h.spriteR = s);
+    const u = h.baseX * o - s, c = un(e.time, h.baseY * i, h.bobAmp, h.bobFreq, h.phase) - s;
+    n.drawImage(h.sprite, u, c), h.baseX * o - s > o - s * 2 && n.drawImage(h.sprite, u - o - s * 2, c);
+  }
+}
+class Mn {
   constructor(t) {
     p(this, "particles");
     p(this, "cursor", 0);
@@ -320,9 +377,9 @@ class Sn {
   spawn() {
     const t = this.cursor;
     do {
-      const o = this.particles[this.cursor];
-      if (this.cursor = (this.cursor + 1) % this.particles.length, !o.active)
-        return o.active = !0, o;
+      const e = this.particles[this.cursor];
+      if (this.cursor = (this.cursor + 1) % this.particles.length, !e.active)
+        return e.active = !0, e;
     } while (this.cursor !== t);
     return null;
   }
@@ -331,37 +388,37 @@ class Sn {
     this.cursor = 0;
   }
 }
-const vn = { light: 0.3, medium: 0.65, heavy: 1 };
+const Cn = { light: 0.3, medium: 0.65, heavy: 1 };
 function G(n) {
-  return vn[n.intensity];
+  return Cn[n.intensity];
 }
-const Cn = { subtle: 1, rich: 1.8 };
-function Mn(n) {
-  return Cn[n.fidelity];
+const wn = { subtle: 1, rich: 1.8 };
+function kn(n) {
+  return wn[n.fidelity];
 }
-function b(n, t, o) {
-  return t + (o - t) * n;
+function g(n, t, e) {
+  return t + (e - t) * n;
 }
 const $ = 0.15;
-function Pn(n) {
+function An(n) {
   return n !== "light";
 }
-function wn(n, t, o) {
-  return t * F(n / o, 0, 1);
+function In(n, t, e) {
+  return t * L(n / e, 0, 1);
 }
-function kn(n, t) {
-  return 1 - F(n / t, 0, 1);
+function Tn(n, t) {
+  return 1 - L(n / t, 0, 1);
 }
-function An(n, t, o, e) {
-  return t + o * Math.sin(n * e);
+function zn(n, t, e, o) {
+  return t + e * Math.sin(n * o);
 }
-function In(n, t) {
+function En(n, t) {
   return -n * t;
 }
-function Tn(n, t, o, e) {
-  return t >= o || Math.abs(n) < e;
+function $n(n, t, e, o) {
+  return t >= e || Math.abs(n) < o;
 }
-const zn = 900;
+const Ln = 900;
 class K {
   constructor() {
     p(this, "pool");
@@ -370,18 +427,18 @@ class K {
     p(this, "config", null);
     p(this, "width", 0);
     p(this, "height", 0);
-    this.pool = new Sn(zn);
+    this.pool = new Mn(Ln);
   }
-  init(t, o, e) {
-    if (this.config = t, this.width = o, this.height = e, this.pool.reset(), this.spawnAccum = 0, this.time = 0, t.condition === "clear" && t.time === "night") {
+  init(t, e, o) {
+    if (this.config = t, this.width = e, this.height = o, this.pool.reset(), this.spawnAccum = 0, this.time = 0, t.condition === "clear" && t.time === "night") {
       const i = Math.floor(120 * G(t));
-      for (let r = 0; r < i; r++) Wn(this.pool, o, e);
+      for (let r = 0; r < i; r++) qn(this.pool, e, o);
     }
   }
   update(t) {
     if (!this.config) return;
     this.time += t;
-    const o = this.config, e = G(o) * Mn(o), i = this.width, r = this.height, s = o.fidelity === "rich", h = An(this.time, -20, 12, 0.4);
+    const e = this.config, o = G(e) * kn(e), i = this.width, r = this.height, s = e.fidelity === "rich", h = zn(this.time, -20, 12, 0.4);
     for (const a of this.pool.particles)
       if (a.active) {
         if (a.x += a.vx * t, a.y += a.vy * t, a.phase += t, a.kind === "splash") {
@@ -392,161 +449,161 @@ class K {
           a.vy += 500 * t, a.alpha -= t * 4, (a.alpha <= 0 || a.y > r + 10) && (a.active = !1);
           continue;
         }
-        if (a.kind === "leaf" && (a.phase += t * 6), o.condition === "snow" && (a.vx = Math.sin(a.phase * 0.8) * 18), o.condition === "rain" && (a.vx = h * b(a.depth, 0.6, 1)), o.condition === "clear" && o.time === "night" && (a.alpha = 0.5 + 0.5 * Math.sin(a.phase * 2.5 + a.size)), (o.condition === "rain" || o.condition === "storm") && a.kind === "primary" && a.y > r && Pn(o.intensity)) {
+        if (a.kind === "leaf" && (a.phase += t * 6), e.condition === "snow" && (a.vx = Math.sin(a.phase * 0.8) * 18), e.condition === "rain" && (a.vx = h * g(a.depth, 0.6, 1)), e.condition === "clear" && e.time === "night" && (a.alpha = 0.5 + 0.5 * Math.sin(a.phase * 2.5 + a.size)), (e.condition === "rain" || e.condition === "storm") && a.kind === "primary" && a.y > r && An(e.intensity)) {
           const m = s ? 0.3 : 0.6;
-          a.depth > m && (Fn(this.pool, a.x, r, s, o.intensity), s && Ln(this.pool, a.x, r, 2 + Math.floor(l() * 3))), a.active = !1;
+          a.depth > m && (Rn(this.pool, a.x, r, s, e.intensity), s && Bn(this.pool, a.x, r, 2 + Math.floor(l() * 3))), a.active = !1;
           continue;
         }
-        if (o.condition === "hail" && a.bounces > 0 && (a.vy += 980 * t), o.condition === "hail" && a.kind === "primary" && a.y > r) {
-          s && !Tn(a.vy, a.bounces, 2, 80) ? (a.y = r, a.vy = In(a.vy, 0.4), a.vx += (l() - 0.5) * 60, a.size *= 0.8, a.bounces += 1) : a.active = !1;
+        if (e.condition === "hail" && a.bounces > 0 && (a.vy += 980 * t), e.condition === "hail" && a.kind === "primary" && a.y > r) {
+          s && !$n(a.vy, a.bounces, 2, 80) ? (a.y = r, a.vy = En(a.vy, 0.4), a.vx += (l() - 0.5) * 60, a.size *= 0.8, a.bounces += 1) : a.active = !1;
           continue;
         }
         (a.y > r + 20 || a.x < -20 || a.x > i + 20 || a.y < -20) && (a.active = !1);
       }
     const u = {
-      rain: 120 * e,
-      "storm-rain": 280 * e,
-      snow: 30 * e,
-      wind: 60 * e,
-      hail: 90 * e
-    }, c = o.condition === "storm" ? "storm-rain" : o.condition, f = u[c];
-    if (f)
-      for (this.spawnAccum += f * t; this.spawnAccum >= 1; )
-        this.spawnAccum -= 1, o.condition === "rain" ? On(this.pool, i) : o.condition === "storm" ? Rn(this.pool, i) : o.condition === "snow" ? Bn(this.pool, i) : o.condition === "wind" ? _n(this.pool, i, r, s) : o.condition === "hail" && Nn(this.pool, i);
+      rain: 120 * o,
+      "storm-rain": 280 * o,
+      snow: 30 * o,
+      wind: 60 * o,
+      hail: 90 * o
+    }, c = e.condition === "storm" ? "storm-rain" : e.condition, d = u[c];
+    if (d)
+      for (this.spawnAccum += d * t; this.spawnAccum >= 1; )
+        this.spawnAccum -= 1, e.condition === "rain" ? Wn(this.pool, i) : e.condition === "storm" ? _n(this.pool, i) : e.condition === "snow" ? Nn(this.pool, i) : e.condition === "wind" ? Gn(this.pool, i, r, s) : e.condition === "hail" && Yn(this.pool, i);
   }
-  draw(t, o, e) {
-    const i = e ?? this.config;
+  draw(t, e, o) {
+    const i = o ?? this.config;
     if (i) {
       t.save();
       for (const r of this.pool.particles)
-        r.active && En(t, r, i, o);
+        r.active && Fn(t, r, i, e);
       t.restore();
     }
   }
 }
-function En(n, t, o, e) {
+function Fn(n, t, e, o) {
   if (t.kind === "droplet") {
-    n.globalAlpha = e * t.alpha, n.fillStyle = "rgba(180,205,225,1)", n.beginPath(), n.arc(t.x, t.y, t.size, 0, Math.PI * 2), n.fill();
+    n.globalAlpha = o * t.alpha, n.fillStyle = "rgba(180,205,225,1)", n.beginPath(), n.arc(t.x, t.y, t.size, 0, Math.PI * 2), n.fill();
     return;
   }
   if (t.kind === "splash") {
-    const i = wn(t.phase, t.size, $), r = kn(t.phase, $), s = o.intensity === "heavy";
-    n.globalAlpha = e * r * (s ? 0.9 : 0.75), n.strokeStyle = "rgba(180,205,225,1)", n.lineWidth = s ? 2 : 1.5, n.beginPath(), n.ellipse(t.x, t.y, i, i * 0.35, 0, 0, Math.PI * 2), n.stroke();
+    const i = In(t.phase, t.size, $), r = Tn(t.phase, $), s = e.intensity === "heavy";
+    n.globalAlpha = o * r * (s ? 0.9 : 0.75), n.strokeStyle = "rgba(180,205,225,1)", n.lineWidth = s ? 2 : 1.5, n.beginPath(), n.ellipse(t.x, t.y, i, i * 0.35, 0, 0, Math.PI * 2), n.stroke();
     return;
   }
   if (t.kind === "leaf") {
-    n.save(), n.globalAlpha = e * t.alpha, n.translate(t.x, t.y), n.rotate(t.phase), n.fillStyle = "rgba(150,170,90,1)", n.beginPath(), n.ellipse(0, 0, t.size, t.size * 0.5, 0, 0, Math.PI * 2), n.fill(), n.restore();
+    n.save(), n.globalAlpha = o * t.alpha, n.translate(t.x, t.y), n.rotate(t.phase), n.fillStyle = "rgba(150,170,90,1)", n.beginPath(), n.ellipse(0, 0, t.size, t.size * 0.5, 0, 0, Math.PI * 2), n.fill(), n.restore();
     return;
   }
-  if (n.globalAlpha = e * t.alpha, o.condition === "rain" || o.condition === "storm")
-    n.strokeStyle = o.condition === "storm" ? "rgba(180,200,220,0.8)" : "rgba(160,190,220,0.7)", n.lineWidth = o.condition === "storm" ? 1.5 : 1, n.beginPath(), n.moveTo(t.x, t.y), n.lineTo(t.x + t.vx * 0.04, t.y + t.length), n.stroke();
-  else if (o.condition === "snow") {
+  if (n.globalAlpha = o * t.alpha, e.condition === "rain" || e.condition === "storm")
+    n.strokeStyle = e.condition === "storm" ? "rgba(180,200,220,0.8)" : "rgba(160,190,220,0.7)", n.lineWidth = e.condition === "storm" ? 1.5 : 1, n.beginPath(), n.moveTo(t.x, t.y), n.lineTo(t.x + t.vx * 0.04, t.y + t.length), n.stroke();
+  else if (e.condition === "snow") {
     if (t.depth < 0.5) {
       const i = n.createRadialGradient(t.x, t.y, 0, t.x, t.y, t.size);
       i.addColorStop(0, `rgba(255,255,255,${t.alpha})`), i.addColorStop(1, "rgba(255,255,255,0)"), n.fillStyle = i;
     } else
       n.fillStyle = `rgba(255,255,255,${t.alpha})`;
     n.beginPath(), n.arc(t.x, t.y, t.size, 0, Math.PI * 2), n.fill();
-  } else if (o.condition === "clear" && o.time === "night") {
-    if (n.fillStyle = `rgba(255,255,240,${t.alpha})`, n.beginPath(), n.arc(t.x, t.y, t.size, 0, Math.PI * 2), n.fill(), t.length > 0 && o.fidelity === "rich") {
-      n.globalAlpha = e * t.alpha * 0.6, n.strokeStyle = "rgba(255,255,240,1)", n.lineWidth = 0.75;
+  } else if (e.condition === "clear" && e.time === "night") {
+    if (n.fillStyle = `rgba(255,255,240,${t.alpha})`, n.beginPath(), n.arc(t.x, t.y, t.size, 0, Math.PI * 2), n.fill(), t.length > 0 && e.fidelity === "rich") {
+      n.globalAlpha = o * t.alpha * 0.6, n.strokeStyle = "rgba(255,255,240,1)", n.lineWidth = 0.75;
       const i = t.size * 3;
       n.beginPath(), n.moveTo(t.x - i, t.y), n.lineTo(t.x + i, t.y), n.moveTo(t.x, t.y - i), n.lineTo(t.x, t.y + i), n.stroke();
     }
-  } else o.condition === "wind" ? (n.strokeStyle = `rgba(180,210,240,${t.alpha})`, n.lineWidth = 1, n.beginPath(), n.moveTo(t.x, t.y), n.quadraticCurveTo(t.x + t.length * 0.5, t.y - t.length * 0.12, t.x + t.length, t.y), n.stroke()) : o.condition === "hail" && (n.fillStyle = `rgba(225,235,245,${t.alpha})`, n.beginPath(), n.arc(t.x, t.y, t.size, 0, Math.PI * 2), n.fill(), n.globalAlpha = e * t.alpha * 0.5, n.strokeStyle = "rgba(255,255,255,0.9)", n.lineWidth = 0.75, n.beginPath(), n.arc(t.x - t.size * 0.25, t.y - t.size * 0.25, t.size * 0.6, 0, Math.PI * 2), n.stroke());
+  } else e.condition === "wind" ? (n.strokeStyle = `rgba(180,210,240,${t.alpha})`, n.lineWidth = 1, n.beginPath(), n.moveTo(t.x, t.y), n.quadraticCurveTo(t.x + t.length * 0.5, t.y - t.length * 0.12, t.x + t.length, t.y), n.stroke()) : e.condition === "hail" && (n.fillStyle = `rgba(225,235,245,${t.alpha})`, n.beginPath(), n.arc(t.x, t.y, t.size, 0, Math.PI * 2), n.fill(), n.globalAlpha = o * t.alpha * 0.5, n.strokeStyle = "rgba(255,255,255,0.9)", n.lineWidth = 0.75, n.beginPath(), n.arc(t.x - t.size * 0.25, t.y - t.size * 0.25, t.size * 0.6, 0, Math.PI * 2), n.stroke());
 }
-const $n = { light: 1, medium: 1.4, heavy: 2 };
-function Fn(n, t, o, e, i) {
+const On = { light: 1, medium: 1.4, heavy: 2 };
+function Rn(n, t, e, o, i) {
   const r = n.spawn();
   if (!r) return;
-  const s = $n[i];
-  r.x = t, r.y = o - 1, r.vx = 0, r.vy = 0, r.alpha = 1, r.size = (e ? 8 + l() * 5 : 5 + l() * 3) * s, r.length = 0, r.phase = 0, r.depth = 1, r.bounces = 0, r.kind = "splash";
+  const s = On[i];
+  r.x = t, r.y = e - 1, r.vx = 0, r.vy = 0, r.alpha = 1, r.size = (o ? 8 + l() * 5 : 5 + l() * 3) * s, r.length = 0, r.phase = 0, r.depth = 1, r.bounces = 0, r.kind = "splash";
 }
-function Ln(n, t, o, e) {
-  for (let i = 0; i < e; i++) {
+function Bn(n, t, e, o) {
+  for (let i = 0; i < o; i++) {
     const r = n.spawn();
     if (!r) break;
-    r.x = t + (l() - 0.5) * 6, r.y = o - 1, r.vx = (l() - 0.5) * 180, r.vy = -(50 + l() * 100), r.alpha = 0.6 + l() * 0.4, r.size = 1 + l() * 1.5, r.length = 0, r.phase = 0, r.depth = 1, r.bounces = 0, r.kind = "droplet";
+    r.x = t + (l() - 0.5) * 6, r.y = e - 1, r.vx = (l() - 0.5) * 180, r.vy = -(50 + l() * 100), r.alpha = 0.6 + l() * 0.4, r.size = 1 + l() * 1.5, r.length = 0, r.phase = 0, r.depth = 1, r.bounces = 0, r.kind = "droplet";
   }
 }
-function On(n, t) {
-  const o = n.spawn();
-  if (!o) return;
-  const e = l();
-  o.x = l() * (t + 100) - 50, o.y = -10, o.vx = -20 * b(e, 0.6, 1), o.vy = (650 + l() * 200) * b(e, 0.55, 1), o.alpha = (0.4 + l() * 0.4) * b(e, 0.5, 1), o.size = 1, o.length = (14 + l() * 10) * b(e, 0.5, 1), o.phase = 0, o.depth = e, o.bounces = 0, o.kind = "primary";
-}
-function Rn(n, t) {
-  const o = n.spawn();
-  o && (o.x = l() * (t + 100) - 50, o.y = -10, o.vx = -35, o.vy = 900 + l() * 300, o.alpha = 0.5 + l() * 0.4, o.size = 1, o.length = 20 + l() * 14, o.phase = 0, o.depth = l(), o.bounces = 0, o.kind = "primary");
-}
-function Bn(n, t) {
-  const o = n.spawn();
-  if (!o) return;
-  const e = l();
-  o.x = l() * t, o.y = -10, o.vx = 0, o.vy = (40 + l() * 50) * b(e, 0.5, 1), o.alpha = (0.6 + l() * 0.4) * b(e, 0.5, 1), o.size = (1.5 + l() * 3) * b(e, 0.5, 1), o.length = 0, o.phase = l() * Math.PI * 2, o.depth = e, o.bounces = 0, o.kind = "primary";
-}
-function Wn(n, t, o) {
+function Wn(n, t) {
   const e = n.spawn();
   if (!e) return;
-  const i = l() < 0.12;
-  e.x = l() * t, e.y = l() * o * 0.7, e.vx = 0, e.vy = 0, e.alpha = 0.3 + l() * 0.7, e.size = i ? 1.6 + l() * 1.2 : 0.5 + l() * 1.5, e.length = i ? 1 : 0, e.phase = l() * Math.PI * 2, e.depth = 0.5, e.bounces = 0, e.kind = "primary";
+  const o = l();
+  e.x = l() * (t + 100) - 50, e.y = -10, e.vx = -20 * g(o, 0.6, 1), e.vy = (650 + l() * 200) * g(o, 0.55, 1), e.alpha = (0.4 + l() * 0.4) * g(o, 0.5, 1), e.size = 1, e.length = (14 + l() * 10) * g(o, 0.5, 1), e.phase = 0, e.depth = o, e.bounces = 0, e.kind = "primary";
 }
-function _n(n, t, o, e) {
-  const i = n.spawn();
-  if (!i) return;
-  const r = l(), s = e && l() < 0.12;
-  i.x = -20, i.y = l() * o, i.vx = (300 + l() * 200) * b(r, 0.55, 1), i.vy = s ? (l() - 0.5) * 40 : 0, i.alpha = (0.2 + l() * 0.5) * b(r, 0.5, 1), i.size = s ? 3 + l() * 3 : 1, i.length = (30 + l() * 60) * b(r, 0.5, 1), i.phase = l() * Math.PI * 2, i.depth = r, i.bounces = 0, i.kind = s ? "leaf" : "primary";
+function _n(n, t) {
+  const e = n.spawn();
+  e && (e.x = l() * (t + 100) - 50, e.y = -10, e.vx = -35, e.vy = 900 + l() * 300, e.alpha = 0.5 + l() * 0.4, e.size = 1, e.length = 20 + l() * 14, e.phase = 0, e.depth = l(), e.bounces = 0, e.kind = "primary");
 }
 function Nn(n, t) {
+  const e = n.spawn();
+  if (!e) return;
+  const o = l();
+  e.x = l() * t, e.y = -10, e.vx = 0, e.vy = (40 + l() * 50) * g(o, 0.5, 1), e.alpha = (0.6 + l() * 0.4) * g(o, 0.5, 1), e.size = (1.5 + l() * 3) * g(o, 0.5, 1), e.length = 0, e.phase = l() * Math.PI * 2, e.depth = o, e.bounces = 0, e.kind = "primary";
+}
+function qn(n, t, e) {
   const o = n.spawn();
   if (!o) return;
-  const e = l();
-  o.x = l() * (t + 60) - 30, o.y = -10, o.vx = -8 * b(e, 0.5, 1), o.vy = (700 + l() * 250) * b(e, 0.55, 1), o.alpha = (0.7 + l() * 0.3) * b(e, 0.5, 1), o.size = (2 + l() * 2.5) * b(e, 0.5, 1), o.length = 0, o.phase = 0, o.depth = e, o.bounces = 0, o.kind = "primary";
+  const i = l() < 0.12;
+  o.x = l() * t, o.y = l() * e * 0.7, o.vx = 0, o.vy = 0, o.alpha = 0.3 + l() * 0.7, o.size = i ? 1.6 + l() * 1.2 : 0.5 + l() * 1.5, o.length = i ? 1 : 0, o.phase = l() * Math.PI * 2, o.depth = 0.5, o.bounces = 0, o.kind = "primary";
+}
+function Gn(n, t, e, o) {
+  const i = n.spawn();
+  if (!i) return;
+  const r = l(), s = o && l() < 0.12;
+  i.x = -20, i.y = l() * e, i.vx = (300 + l() * 200) * g(r, 0.55, 1), i.vy = s ? (l() - 0.5) * 40 : 0, i.alpha = (0.2 + l() * 0.5) * g(r, 0.5, 1), i.size = s ? 3 + l() * 3 : 1, i.length = (30 + l() * 60) * g(r, 0.5, 1), i.phase = l() * Math.PI * 2, i.depth = r, i.bounces = 0, i.kind = s ? "leaf" : "primary";
 }
 function Yn(n, t) {
+  const e = n.spawn();
+  if (!e) return;
+  const o = l();
+  e.x = l() * (t + 60) - 30, e.y = -10, e.vx = -8 * g(o, 0.5, 1), e.vy = (700 + l() * 250) * g(o, 0.55, 1), e.alpha = (0.7 + l() * 0.3) * g(o, 0.5, 1), e.size = (2 + l() * 2.5) * g(o, 0.5, 1), e.length = 0, e.phase = 0, e.depth = o, e.bounces = 0, e.kind = "primary";
+}
+function Hn(n, t) {
   return { from: n, to: t, elapsed: 0 };
 }
-function Gn(n, t) {
+function Dn(n, t) {
   return {
     ...n,
     elapsed: Math.min(n.elapsed + t * 1e3, n.to.transitionMs)
   };
 }
-function Hn(n) {
-  const t = F(n.elapsed / n.to.transitionMs, 0, 1);
-  return x(t);
-}
 function Xn(n) {
+  const t = L(n.elapsed / n.to.transitionMs, 0, 1);
+  return nn(t);
+}
+function Kn(n) {
   return n.elapsed >= n.to.transitionMs;
 }
-function qn(n, t, o) {
-  const e = new K();
-  return e.init(n, t, o), {
+function Un(n, t, e) {
+  const o = new K();
+  return o.init(n, t, e), {
     current: n,
-    currentClouds: q(n, t, o),
-    currentPS: e,
-    currentAtmo: D(),
+    currentClouds: D(n, t, e),
+    currentPS: o,
+    currentAtmo: X(),
     transition: null,
     transClouds: null,
     transPS: null,
     transAtmo: null
   };
 }
-function Dn(n, t, o, e) {
+function Vn(n, t, e, o) {
   const i = n.current, r = new K();
-  return r.init(t, o, e), {
+  return r.init(t, e, o), {
     ...n,
-    transition: Yn(i, t),
-    transClouds: q(t, o, e),
+    transition: Hn(i, t),
+    transClouds: D(t, e, o),
     transPS: r,
-    transAtmo: D()
+    transAtmo: X()
   };
 }
-function H(n, t, o, e) {
+function Y(n, t, e, o) {
   let i = { ...n };
-  if (N(i.currentAtmo, i.current, t), i.currentPS.update(t), _(i.currentClouds, t, o), i.transition) {
-    const r = Gn(i.transition, t);
-    i.transition = r, i.transAtmo && N(i.transAtmo, r.to, t), i.transPS && i.transPS.update(t), i.transClouds && _(i.transClouds, t, o), Xn(r) && (i = {
+  if (N(i.currentAtmo, i.current, t), i.currentPS.update(t), _(i.currentClouds, t, e), i.transition) {
+    const r = Dn(i.transition, t);
+    i.transition = r, i.transAtmo && N(i.transAtmo, r.to, t), i.transPS && i.transPS.update(t), i.transClouds && _(i.transClouds, t, e), Kn(r) && (i = {
       current: r.to,
       currentClouds: i.transClouds,
       currentPS: i.transPS,
@@ -559,15 +616,15 @@ function H(n, t, o, e) {
   }
   return i;
 }
-function X(n, t, o, e, i) {
-  if (o.clearRect(0, 0, e, i), n.transition) {
-    const r = Hn(n.transition), s = n.transition.from, h = n.transition.to, u = 1 - r;
-    on(t, s, h, r), z(o, s, n.currentAtmo, u, e, i), n.transAtmo && z(o, h, n.transAtmo, r, e, i), I(o, n.currentClouds, s, u), T(o, s, n.currentAtmo, u, e, i), n.currentPS.draw(o, u, s), n.transClouds && I(o, n.transClouds, h, r), n.transAtmo && T(o, h, n.transAtmo, r, e, i), n.transPS && n.transPS.draw(o, r, h);
+function H(n, t, e, o, i) {
+  if (e.clearRect(0, 0, o, i), n.transition) {
+    const r = Xn(n.transition), s = n.transition.from, h = n.transition.to, u = 1 - r;
+    on(t, s, h, r), z(e, s, n.currentAtmo, u, o, i), n.transAtmo && z(e, h, n.transAtmo, r, o, i), I(e, n.currentClouds, s, u), T(e, s, n.currentAtmo, u, o, i), n.currentPS.draw(e, u, s), n.transClouds && I(e, n.transClouds, h, r), n.transAtmo && T(e, h, n.transAtmo, r, o, i), n.transPS && n.transPS.draw(e, r, h);
   } else
-    tn(t, n.current, n.currentAtmo.lightningFlash), z(o, n.current, n.currentAtmo, 1, e, i), I(o, n.currentClouds, n.current, 1), T(o, n.current, n.currentAtmo, 1, e, i), n.currentPS.draw(o, 1, n.current);
+    en(t, n.current, n.currentAtmo.lightningFlash), z(e, n.current, n.currentAtmo, 1, o, i), I(e, n.currentClouds, n.current, 1), T(e, n.current, n.currentAtmo, 1, o, i), n.currentPS.draw(e, 1, n.current);
 }
-class Un {
-  constructor(t, o = {}) {
+class Zn {
+  constructor(t, e = {}) {
     p(this, "destroyed", !1);
     p(this, "skyEl");
     p(this, "canvas");
@@ -578,35 +635,35 @@ class Un {
     p(this, "resizeObserver");
     p(this, "manual");
     if (this.container = t, !t) throw new Error("WeatherScene: container element is required");
-    this.manual = o.manual ?? !1, getComputedStyle(t).position === "static" && (t.style.position = "relative"), t.style.overflow = "hidden", this.skyEl = document.createElement("div"), this.skyEl.style.cssText = "position:absolute;inset:0;", this.canvas = document.createElement("canvas"), this.canvas.style.cssText = "position:absolute;inset:0;", t.appendChild(this.skyEl), t.appendChild(this.canvas), this.ctx = this.canvas.getContext("2d"), this.resizeCanvas(), this.resizeObserver = new ResizeObserver(() => this.resizeCanvas()), this.resizeObserver.observe(t);
+    this.manual = e.manual ?? !1, getComputedStyle(t).position === "static" && (t.style.position = "relative"), t.style.overflow = "hidden", this.skyEl = document.createElement("div"), this.skyEl.style.cssText = "position:absolute;inset:0;", this.canvas = document.createElement("canvas"), this.canvas.style.cssText = "position:absolute;inset:0;", t.appendChild(this.skyEl), t.appendChild(this.canvas), this.ctx = this.canvas.getContext("2d"), this.resizeCanvas(), this.resizeObserver = new ResizeObserver(() => this.resizeCanvas()), this.resizeObserver.observe(t);
   }
   resizeCanvas() {
-    const { offsetWidth: t, offsetHeight: o } = this.container;
-    this.canvas.width = t, this.canvas.height = o;
+    const { offsetWidth: t, offsetHeight: e } = this.container;
+    this.canvas.width = t, this.canvas.height = e;
   }
   set(t) {
     if (this.destroyed) return;
-    const o = Q(t), { offsetWidth: e, offsetHeight: i } = this.container;
-    this.engineState ? this.engineState = Dn(this.engineState, o, e, i) : (this.engineState = qn(o, e, i), this.manual || this.startLoop());
+    const e = x(t), { offsetWidth: o, offsetHeight: i } = this.container;
+    this.engineState ? this.engineState = Vn(this.engineState, e, o, i) : (this.engineState = Un(e, o, i), this.manual || this.startLoop());
   }
   /** Deterministically tick + render N frames at a fixed delta (test hook). */
-  advance(t, o = 1 / 60) {
+  advance(t, e = 1 / 60) {
     if (this.destroyed || !this.engineState || !this.ctx) return;
-    const e = this.canvas.width, i = this.canvas.height;
+    const o = this.canvas.width, i = this.canvas.height;
     for (let r = 0; r < t; r++)
-      this.engineState = H(this.engineState, o, e);
-    X(this.engineState, this.skyEl, this.ctx, e, i);
+      this.engineState = Y(this.engineState, e, o);
+    H(this.engineState, this.skyEl, this.ctx, o, i);
   }
   destroy() {
     this.destroyed || (this.destroyed = !0, this.stopLoop(), this.resizeObserver.disconnect(), this.skyEl.remove(), this.canvas.remove(), this.engineState = null);
   }
   startLoop() {
-    const t = (o) => {
+    const t = (e) => {
       if (this.destroyed) return;
-      const e = this.lastTimestamp != null ? Math.min((o - this.lastTimestamp) / 1e3, 0.1) : 0;
-      if (this.lastTimestamp = o, this.engineState && this.ctx) {
+      const o = this.lastTimestamp != null ? Math.min((e - this.lastTimestamp) / 1e3, 0.1) : 0;
+      if (this.lastTimestamp = e, this.engineState && this.ctx) {
         const i = this.canvas.width, r = this.canvas.height;
-        this.engineState = H(this.engineState, e, i), X(this.engineState, this.skyEl, this.ctx, i, r);
+        this.engineState = Y(this.engineState, o, i), H(this.engineState, this.skyEl, this.ctx, i, r);
       }
       this.rafId = requestAnimationFrame(t);
     };
@@ -617,5 +674,5 @@ class Un {
   }
 }
 export {
-  Un as WeatherScene
+  Zn as WeatherScene
 };

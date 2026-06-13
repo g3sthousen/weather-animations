@@ -1,4 +1,4 @@
-import type { ResolvedConfig } from './types';
+import type { MoonPhase, ResolvedConfig } from './types';
 import { random } from './rng';
 
 interface FogPlume {
@@ -164,7 +164,7 @@ export function drawCelestial(
   if (config.time === 'day') {
     drawSun(ctx, config, state, width, height);
   } else {
-    drawMoon(ctx, width, height);
+    drawMoon(ctx, config, width, height);
   }
   ctx.restore();
 }
@@ -282,10 +282,43 @@ function drawSun(ctx: CanvasRenderingContext2D, config: ResolvedConfig, state: A
   ctx.fill();
 }
 
-function drawMoon(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+function drawMoon(ctx: CanvasRenderingContext2D, config: ResolvedConfig, width: number, height: number): void {
   const x = width * 0.75;
   const y = height * 0.18;
   const r = Math.min(width, height) * 0.06;
+  const phase = config.moonPhase;
+  const isNew = phase === 'new';
+
+  if (!isNew) {
+    const glow = ctx.createRadialGradient(x, y, r, x, y, r * 2.6);
+    glow.addColorStop(0, 'rgba(220,230,245,0.22)');
+    glow.addColorStop(1, 'rgba(220,230,245,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(x, y, r * 2.6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const dark = ctx.createRadialGradient(x - r * 0.15, y - r * 0.2, 0, x, y, r);
+  dark.addColorStop(0, isNew ? 'rgba(155,165,185,0.18)' : 'rgba(70,76,92,0.55)');
+  dark.addColorStop(1, isNew ? 'rgba(100,110,130,0.13)' : 'rgba(38,44,58,0.6)');
+  ctx.fillStyle = dark;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  if (isNew) {
+    ctx.strokeStyle = 'rgba(190,200,220,0.14)';
+    ctx.lineWidth = Math.max(1, r * 0.035);
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.stroke();
+    return;
+  }
+
+  ctx.save();
+  makeLitMoonPath(ctx, x, y, r, phase);
+  ctx.clip();
 
   const grad = ctx.createRadialGradient(x - r * 0.2, y - r * 0.2, 0, x, y, r);
   grad.addColorStop(0, '#fffde7');
@@ -296,22 +329,56 @@ function drawMoon(ctx: CanvasRenderingContext2D, width: number, height: number):
   ctx.arc(x, y, r, 0, Math.PI * 2);
   ctx.fill();
 
-  // cooler glow
-  const glow = ctx.createRadialGradient(x, y, r, x, y, r * 2.6);
-  glow.addColorStop(0, 'rgba(220,230,245,0.22)');
-  glow.addColorStop(1, 'rgba(220,230,245,0)');
-  ctx.fillStyle = glow;
-  ctx.beginPath();
-  ctx.arc(x, y, r * 2.6, 0, Math.PI * 2);
-  ctx.fill();
-
-  // 2–3 darker crater spots
-  ctx.fillStyle = 'rgba(180,185,200,0.35)';
+  const craterAlpha = phase === 'waxing-crescent' || phase === 'waning-crescent' ? 0.18 : 0.35;
+  ctx.fillStyle = `rgba(180,185,200,${craterAlpha})`;
   const craters: Array<[number, number, number]> = [[-0.3, -0.2, 0.18], [0.25, 0.1, 0.13], [0.05, 0.35, 0.1]];
   for (const [dx, dy, cr] of craters) {
     ctx.beginPath();
     ctx.arc(x + dx * r, y + dy * r, cr * r, 0, Math.PI * 2);
     ctx.fill();
+  }
+  ctx.restore();
+}
+
+function makeLitMoonPath(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, phase: MoonPhase): void {
+  const shape = getMoonPhaseShape(phase);
+  ctx.beginPath();
+  if (shape.kind === 'full') {
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    return;
+  }
+
+  const side = shape.side;
+  ctx.moveTo(x, y - r);
+  ctx.arc(x, y, r, -Math.PI / 2, Math.PI / 2, side < 0);
+
+  if (shape.kind === 'quarter') {
+    ctx.lineTo(x, y - r);
+  } else {
+    const bend = shape.kind === 'crescent' ? 0.62 : -0.42;
+    const cx = x + side * r * bend;
+    ctx.bezierCurveTo(cx, y + r * 0.7, cx, y - r * 0.7, x, y - r);
+  }
+  ctx.closePath();
+}
+
+function getMoonPhaseShape(phase: MoonPhase): { kind: 'full' } | { kind: 'crescent' | 'quarter' | 'gibbous'; side: -1 | 1 } {
+  switch (phase) {
+    case 'waxing-crescent':
+      return { kind: 'crescent', side: 1 };
+    case 'first-quarter':
+      return { kind: 'quarter', side: 1 };
+    case 'waxing-gibbous':
+      return { kind: 'gibbous', side: 1 };
+    case 'waning-gibbous':
+      return { kind: 'gibbous', side: -1 };
+    case 'last-quarter':
+      return { kind: 'quarter', side: -1 };
+    case 'waning-crescent':
+      return { kind: 'crescent', side: -1 };
+    case 'full':
+    case 'new':
+      return { kind: 'full' };
   }
 }
 

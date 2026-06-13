@@ -2,6 +2,15 @@ export type Condition = 'clear' | 'cloudy' | 'rain' | 'snow' | 'storm' | 'fog' |
 export type Intensity = 'light' | 'medium' | 'heavy';
 export type TimeOfDay = 'day' | 'night';
 export type Fidelity = 'subtle' | 'rich';
+export type MoonPhase =
+  | 'new'
+  | 'waxing-crescent'
+  | 'first-quarter'
+  | 'waxing-gibbous'
+  | 'full'
+  | 'waning-gibbous'
+  | 'last-quarter'
+  | 'waning-crescent';
 
 export interface WeatherConfig {
   condition: Condition;
@@ -9,6 +18,7 @@ export interface WeatherConfig {
   time?: TimeOfDay;
   transitionMs?: number;
   fidelity?: Fidelity;
+  moonPhase?: MoonPhase;
 }
 
 export interface ResolvedConfig {
@@ -17,6 +27,7 @@ export interface ResolvedConfig {
   time: TimeOfDay;
   transitionMs: number;
   fidelity: Fidelity;
+  moonPhase: MoonPhase;
 }
 
 export interface RGBColor {
@@ -65,16 +76,30 @@ export interface CloudBlob {
 }
 
 export const VALID_CONDITIONS: Condition[] = ['clear', 'cloudy', 'rain', 'snow', 'storm', 'fog', 'wind', 'hail'];
+export const VALID_MOON_PHASES: MoonPhase[] = [
+  'new',
+  'waxing-crescent',
+  'first-quarter',
+  'waxing-gibbous',
+  'full',
+  'waning-gibbous',
+  'last-quarter',
+  'waning-crescent',
+];
 
 export function resolveConfig(config: WeatherConfig): ResolvedConfig {
   const condition: Condition = VALID_CONDITIONS.includes(config.condition as Condition)
     ? config.condition
     : 'clear';
+  const moonPhase: MoonPhase = VALID_MOON_PHASES.includes(config.moonPhase as MoonPhase)
+    ? config.moonPhase as MoonPhase
+    : 'full';
   return {
     condition,
     intensity: config.intensity ?? 'medium',
     time: config.time ?? 'day',
     transitionMs: config.transitionMs ?? 1200,
     fidelity: config.fidelity ?? 'subtle',
+    moonPhase,
   };
 }

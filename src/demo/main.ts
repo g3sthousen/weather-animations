@@ -1,5 +1,5 @@
 import { WeatherScene } from '../core/index';
-import type { Condition, Intensity, TimeOfDay, Fidelity } from '../core/index';
+import type { Condition, Intensity, TimeOfDay, Fidelity, MoonPhase } from '../core/index';
 import { seedRng } from '../core/rng';
 
 const container = document.getElementById('weather-container')!;
@@ -17,15 +17,42 @@ let activeCondition: Condition = (params.get('condition') as Condition) ?? 'clea
 let activeTime: TimeOfDay = (params.get('time') as TimeOfDay) ?? 'day';
 let activeIntensity: Intensity = (params.get('intensity') as Intensity) ?? 'medium';
 let activeFidelity: Fidelity = (params.get('fidelity') as Fidelity) ?? 'subtle';
+let activeMoonPhase: MoonPhase = (params.get('moonPhase') as MoonPhase) ?? 'full';
 
 const CONDITIONS: Condition[] = ['clear', 'cloudy', 'rain', 'snow', 'storm', 'fog', 'wind', 'hail'];
 const CONDITION_LABELS: Record<Condition, string> = {
   clear: 'Clear', cloudy: 'Cloudy', rain: 'Rain',
   snow: 'Snow', storm: 'Storm', fog: 'Fog', wind: 'Wind', hail: 'Hail',
 };
+const MOON_PHASES: MoonPhase[] = [
+  'new',
+  'waxing-crescent',
+  'first-quarter',
+  'waxing-gibbous',
+  'full',
+  'waning-gibbous',
+  'last-quarter',
+  'waning-crescent',
+];
+const MOON_PHASE_LABELS: Record<MoonPhase, string> = {
+  new: 'New',
+  'waxing-crescent': 'Wax Cr.',
+  'first-quarter': '1st Q.',
+  'waxing-gibbous': 'Wax Gib.',
+  full: 'Full',
+  'waning-gibbous': 'Wan Gib.',
+  'last-quarter': 'Last Q.',
+  'waning-crescent': 'Wan Cr.',
+};
 
 function render() {
-  scene.set({ condition: activeCondition, time: activeTime, intensity: activeIntensity, fidelity: activeFidelity });
+  scene.set({
+    condition: activeCondition,
+    time: activeTime,
+    intensity: activeIntensity,
+    fidelity: activeFidelity,
+    moonPhase: activeMoonPhase,
+  });
 }
 
 function buildControls() {
@@ -75,10 +102,21 @@ function buildControls() {
     fidRow.appendChild(btn);
   }
 
+  const moonRow = document.createElement('div');
+  moonRow.className = 'btn-row moon-row';
+  for (const phase of MOON_PHASES) {
+    const btn = document.createElement('button');
+    btn.textContent = MOON_PHASE_LABELS[phase];
+    if (phase === activeMoonPhase) btn.classList.add('active');
+    btn.addEventListener('click', () => { activeMoonPhase = phase; buildControls(); render(); });
+    moonRow.appendChild(btn);
+  }
+
   controlsEl.appendChild(condRow);
   controlsEl.appendChild(timeRow);
   controlsEl.appendChild(intRow);
   controlsEl.appendChild(fidRow);
+  controlsEl.appendChild(moonRow);
 }
 
 buildControls();
