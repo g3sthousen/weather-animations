@@ -131,6 +131,10 @@ export class ParticleSystem {
         continue;
       }
 
+      if (p.kind === 'leaf') {
+        p.phase += delta * 6;
+      }
+
       if (cfg.condition === 'snow') {
         p.vx = Math.sin(p.phase * 0.8) * 18;
       }
@@ -185,7 +189,7 @@ export class ParticleSystem {
         if (cfg.condition === 'rain') spawnRain(this.pool, w);
         else if (cfg.condition === 'storm') spawnStormRain(this.pool, w);
         else if (cfg.condition === 'snow') spawnSnow(this.pool, w);
-        else if (cfg.condition === 'wind') spawnWind(this.pool, w, h);
+        else if (cfg.condition === 'wind') spawnWind(this.pool, w, h, rich);
         else if (cfg.condition === 'hail') spawnHail(this.pool, w);
       }
     }
@@ -212,6 +216,19 @@ function drawParticle(ctx: CanvasRenderingContext2D, p: Particle, cfg: ResolvedC
     ctx.beginPath();
     ctx.ellipse(p.x, p.y, r, r * 0.4, 0, 0, Math.PI * 2);
     ctx.stroke();
+    return;
+  }
+
+  if (p.kind === 'leaf') {
+    ctx.save();
+    ctx.globalAlpha = systemAlpha * p.alpha;
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.phase);
+    ctx.fillStyle = 'rgba(150,170,90,1)';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, p.size, p.size * 0.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
     return;
   }
 
@@ -256,7 +273,7 @@ function drawParticle(ctx: CanvasRenderingContext2D, p: Particle, cfg: ResolvedC
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(p.x, p.y);
-    ctx.lineTo(p.x + p.length, p.y);
+    ctx.quadraticCurveTo(p.x + p.length * 0.5, p.y - p.length * 0.12, p.x + p.length, p.y);
     ctx.stroke();
   } else if (cfg.condition === 'hail') {
     ctx.fillStyle = `rgba(225,235,245,${p.alpha})`;
@@ -356,20 +373,22 @@ function spawnStar(pool: ParticlePool, w: number, h: number): void {
   p.kind = 'primary';
 }
 
-function spawnWind(pool: ParticlePool, w: number, h: number): void {
+function spawnWind(pool: ParticlePool, w: number, h: number, rich: boolean): void {
   const p = pool.spawn();
   if (!p) return;
+  const depth = random();
+  const leaf = rich && random() < 0.12;
   p.x = -20;
   p.y = random() * h;
-  p.vx = 300 + random() * 200;
-  p.vy = 0;
-  p.alpha = 0.2 + random() * 0.5;
-  p.size = 1;
-  p.length = 30 + random() * 60;
-  p.phase = 0;
-  p.depth = random();
+  p.vx = (300 + random() * 200) * depthFactor(depth, 0.55, 1);
+  p.vy = leaf ? (random() - 0.5) * 40 : 0;
+  p.alpha = (0.2 + random() * 0.5) * depthFactor(depth, 0.5, 1);
+  p.size = leaf ? 3 + random() * 3 : 1;
+  p.length = (30 + random() * 60) * depthFactor(depth, 0.5, 1);
+  p.phase = random() * Math.PI * 2;
+  p.depth = depth;
   p.bounces = 0;
-  p.kind = 'primary';
+  p.kind = leaf ? 'leaf' : 'primary';
 }
 
 function spawnHail(pool: ParticlePool, w: number): void {
