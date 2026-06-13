@@ -1,7 +1,7 @@
 import type { CloudBlob, CloudLobe, Intensity, ResolvedConfig } from './types';
 import { random } from './rng';
 
-const LAYER_SPEEDS = [0.008, 0.025, 0.055] as const;
+const LAYER_SPEEDS = [0.006, 0.022, 0.06] as const;
 const LAYER_COUNTS: Record<0 | 1 | 2, number> = { 0: 4, 1: 5, 2: 6 };
 
 // Intensity drives cloud coverage (how many) and density (how opaque), so
@@ -40,7 +40,7 @@ function shouldShowClouds(condition: string): boolean {
 // A cumulus cloud is a row of overlapping round lobes with a flat-ish bottom and
 // a billowy top. Aligning each lobe's bottom near the cloud base (dy = 1 - r)
 // makes the larger, central lobes rise higher — the classic puffy silhouette.
-function generateLobes(width: number, height: number): CloudLobe[] {
+function generateLobes(width: number, height: number, flat: boolean): CloudLobe[] {
   const rx = width / 2;
   const ry = height / 2;
   const aspect = rx / ry;
@@ -48,9 +48,10 @@ function generateLobes(width: number, height: number): CloudLobe[] {
   const lobes: CloudLobe[] = [];
   for (let i = 0; i < count; i++) {
     const t = count === 1 ? 0.5 : i / (count - 1);
-    const dx = (t - 0.5) * 1.8;
-    const centerBias = 1 - Math.abs(t - 0.5) * 2; // 1 at center → 0 at the edges
-    const r = Math.min(1.05, 0.62 + centerBias * 0.42 + (random() * 0.16 - 0.08));
+    const dx = (t - 0.5) * (flat ? 2.4 : 1.8);
+    const centerBias = 1 - Math.abs(t - 0.5) * 2;
+    const rise = flat ? 0.18 : 0.42;
+    const r = Math.min(1.05, 0.62 + centerBias * rise + (random() * 0.16 - 0.08));
     const dy = (1 - r) + random() * 0.08;
     lobes.push({ dx, dy, r });
   }
@@ -67,17 +68,20 @@ export function initClouds(config: ResolvedConfig, width: number, height: number
     const count = Math.max(2, Math.round(baseCount * countMul));
     for (let i = 0; i < count; i++) {
       const isWind = config.condition === 'wind';
-      const w = isWind ? width * (0.15 + random() * 0.12) : width * (0.22 + random() * 0.18);
-      const h = isWind ? height * 0.04 : height * (0.12 + random() * 0.08);
+      const layerScale = 1 + layer * 0.35;
+      const w = isWind
+        ? width * (0.15 + random() * 0.12)
+        : width * (0.22 + random() * 0.18) * layerScale;
+      const h = isWind ? height * 0.04 : height * (0.12 + random() * 0.08) * layerScale;
       blobs.push({
         x: (i / count) * width * 1.4 - width * 0.2,
-        y: height * (0.05 + layer * 0.12 + random() * 0.08),
+        y: height * (0.04 + layer * 0.18 + random() * 0.08),
         width: w,
         height: h,
         alpha: cloudAlpha(config, layer),
         speed: LAYER_SPEEDS[layer] * (isWind ? 3 : 1) * width,
         layer,
-        lobes: isWind ? [] : generateLobes(w, h),
+        lobes: isWind ? [] : generateLobes(w, h, random() < 0.35),
       });
     }
   }
@@ -136,12 +140,16 @@ function buildSprite(b: CloudBlob, config: ResolvedConfig): OffscreenCanvas {
   }
   c.filter = 'none';
 
-  // Vertical form shading, clipped to the cloud body: a lit top and shaded base.
+  // Vertical form shading, clipped to the cloud body: lit top, shaded base.
   c.globalCompositeOperation = 'source-atop';
+  const day = config.time === 'day';
+  const darkBase = config.condition === 'rain' || config.condition === 'storm' || config.condition === 'hail';
+  const topLight = day ? 'rgba(255,244,214,0.22)' : 'rgba(190,205,235,0.10)';
+  const baseShade = darkBase ? 'rgba(0,0,0,0.30)' : 'rgba(0,0,0,0.16)';
   const shade = c.createLinearGradient(0, ly - ry * 1.1, 0, ly + ry * 1.1);
-  shade.addColorStop(0, 'rgba(255,255,255,0.18)');
+  shade.addColorStop(0, topLight);
   shade.addColorStop(0.5, 'rgba(255,255,255,0)');
-  shade.addColorStop(1, 'rgba(0,0,0,0.16)');
+  shade.addColorStop(1, baseShade);
   c.fillStyle = shade;
   c.fillRect(0, 0, offW, offH);
   c.globalCompositeOperation = 'source-over';
