@@ -1,4 +1,5 @@
 import type { CloudBlob, CloudLobe, Intensity, ResolvedConfig } from './types';
+import { random } from './rng';
 
 const LAYER_SPEEDS = [0.008, 0.025, 0.055] as const;
 const LAYER_COUNTS: Record<0 | 1 | 2, number> = { 0: 4, 1: 5, 2: 6 };
@@ -45,8 +46,8 @@ function generateLobes(width: number, height: number): CloudLobe[] {
     const t = count === 1 ? 0.5 : i / (count - 1);
     const dx = (t - 0.5) * 1.8;
     const centerBias = 1 - Math.abs(t - 0.5) * 2; // 1 at center → 0 at the edges
-    const r = Math.min(1.05, 0.62 + centerBias * 0.42 + (Math.random() * 0.16 - 0.08));
-    const dy = (1 - r) + Math.random() * 0.08;
+    const r = Math.min(1.05, 0.62 + centerBias * 0.42 + (random() * 0.16 - 0.08));
+    const dy = (1 - r) + random() * 0.08;
     lobes.push({ dx, dy, r });
   }
   return lobes;
@@ -62,11 +63,11 @@ export function initClouds(config: ResolvedConfig, width: number, height: number
     const count = Math.max(2, Math.round(baseCount * countMul));
     for (let i = 0; i < count; i++) {
       const isWind = config.condition === 'wind';
-      const w = isWind ? width * (0.15 + Math.random() * 0.12) : width * (0.22 + Math.random() * 0.18);
-      const h = isWind ? height * 0.04 : height * (0.12 + Math.random() * 0.08);
+      const w = isWind ? width * (0.15 + random() * 0.12) : width * (0.22 + random() * 0.18);
+      const h = isWind ? height * 0.04 : height * (0.12 + random() * 0.08);
       blobs.push({
         x: (i / count) * width * 1.4 - width * 0.2,
-        y: height * (0.05 + layer * 0.12 + Math.random() * 0.08),
+        y: height * (0.05 + layer * 0.12 + random() * 0.08),
         width: w,
         height: h,
         alpha: cloudAlpha(config, layer),

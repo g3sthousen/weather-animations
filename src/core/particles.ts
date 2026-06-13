@@ -1,4 +1,5 @@
 import type { Particle, ResolvedConfig } from './types';
+import { random } from './rng';
 
 export class ParticlePool {
   readonly particles: Particle[];
@@ -159,64 +160,64 @@ function drawParticle(ctx: CanvasRenderingContext2D, p: Particle, cfg: ResolvedC
 function spawnRain(pool: ParticlePool, w: number): void {
   const p = pool.spawn();
   if (!p) return;
-  p.x = Math.random() * (w + 100) - 50;
+  p.x = random() * (w + 100) - 50;
   p.y = -10;
   p.vx = -20;
-  p.vy = 650 + Math.random() * 200;
-  p.alpha = 0.4 + Math.random() * 0.4;
+  p.vy = 650 + random() * 200;
+  p.alpha = 0.4 + random() * 0.4;
   p.size = 1;
-  p.length = 14 + Math.random() * 10;
+  p.length = 14 + random() * 10;
   p.phase = 0;
 }
 
 function spawnStormRain(pool: ParticlePool, w: number): void {
   const p = pool.spawn();
   if (!p) return;
-  p.x = Math.random() * (w + 100) - 50;
+  p.x = random() * (w + 100) - 50;
   p.y = -10;
   p.vx = -35;
-  p.vy = 900 + Math.random() * 300;
-  p.alpha = 0.5 + Math.random() * 0.4;
+  p.vy = 900 + random() * 300;
+  p.alpha = 0.5 + random() * 0.4;
   p.size = 1;
-  p.length = 20 + Math.random() * 14;
+  p.length = 20 + random() * 14;
   p.phase = 0;
 }
 
 function spawnSnow(pool: ParticlePool, w: number): void {
   const p = pool.spawn();
   if (!p) return;
-  p.x = Math.random() * w;
+  p.x = random() * w;
   p.y = -10;
   p.vx = 0;
-  p.vy = 40 + Math.random() * 50;
-  p.alpha = 0.6 + Math.random() * 0.4;
-  p.size = 1.5 + Math.random() * 3;
+  p.vy = 40 + random() * 50;
+  p.alpha = 0.6 + random() * 0.4;
+  p.size = 1.5 + random() * 3;
   p.length = 0;
-  p.phase = Math.random() * Math.PI * 2;
+  p.phase = random() * Math.PI * 2;
 }
 
 function spawnStar(pool: ParticlePool, w: number, h: number): void {
   const p = pool.spawn();
   if (!p) return;
-  p.x = Math.random() * w;
-  p.y = Math.random() * h * 0.7;
+  p.x = random() * w;
+  p.y = random() * h * 0.7;
   p.vx = 0;
   p.vy = 0;
-  p.alpha = 0.3 + Math.random() * 0.7;
-  p.size = 0.5 + Math.random() * 1.5;
+  p.alpha = 0.3 + random() * 0.7;
+  p.size = 0.5 + random() * 1.5;
   p.length = 0;
-  p.phase = Math.random() * Math.PI * 2;
+  p.phase = random() * Math.PI * 2;
 }
 
 function spawnWind(pool: ParticlePool, w: number, h: number): void {
   const p = pool.spawn();
   if (!p) return;
   p.x = -20;
-  p.y = Math.random() * h;
-  p.vx = 300 + Math.random() * 200;
+  p.y = random() * h;
+  p.vx = 300 + random() * 200;
   p.vy = 0;
-  p.alpha = 0.2 + Math.random() * 0.5;
+  p.alpha = 0.2 + random() * 0.5;
   p.size = 1;
-  p.length = 30 + Math.random() * 60;
+  p.length = 30 + random() * 60;
   p.phase = 0;
 }

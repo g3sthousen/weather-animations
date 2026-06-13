@@ -1,4 +1,5 @@
 import type { ResolvedConfig } from './types';
+import { random } from './rng';
 
 export interface AtmosphereState {
   lightningFlash: number;
@@ -19,7 +20,7 @@ export function updateAtmosphere(state: AtmosphereState, config: ResolvedConfig,
     if (state.lightningTimer <= 0) {
       state.lightningFlash = 1.0;
       const base = config.intensity === 'heavy' ? 1500 : config.intensity === 'medium' ? 2500 : 4000;
-      state.lightningTimer = base + Math.random() * base;
+      state.lightningTimer = base + random() * base;
       state.boltPoints = generateBolt();
     }
     state.lightningFlash = Math.max(0, state.lightningFlash - delta * 3.5);
@@ -68,11 +69,11 @@ export function drawAtmosphere(
 }
 
 function generateBolt(): Array<[number, number]> {
-  const startX = 0.2 + Math.random() * 0.6;
+  const startX = 0.2 + random() * 0.6;
   const points: Array<[number, number]> = [[startX, 0.08]];
   let cx = startX;
   for (let i = 1; i <= 8; i++) {
-    cx += (Math.random() - 0.5) * 0.13;
+    cx += (random() - 0.5) * 0.13;
     cx = Math.max(0.05, Math.min(0.95, cx));
     points.push([cx, 0.08 + (0.52 * i) / 8]);
   }
