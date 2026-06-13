@@ -37,23 +37,34 @@ function shouldShowClouds(condition: string): boolean {
   return condition !== 'clear' && condition !== 'fog';
 }
 
-// A cumulus cloud is a row of overlapping round lobes with a flat-ish bottom and
-// a billowy top. Aligning each lobe's bottom near the cloud base (dy = 1 - r)
-// makes the larger, central lobes rise higher — the classic puffy silhouette.
 function generateLobes(width: number, height: number, flat: boolean): CloudLobe[] {
   const rx = width / 2;
   const ry = height / 2;
   const aspect = rx / ry;
   const count = Math.max(4, Math.min(9, Math.round(2 + aspect * 1.8)));
+  const spacing = flat ? 2.4 : 1.8;
+  const step = spacing / Math.max(1, count - 1);
   const lobes: CloudLobe[] = [];
   for (let i = 0; i < count; i++) {
     const t = count === 1 ? 0.5 : i / (count - 1);
-    const dx = (t - 0.5) * (flat ? 2.4 : 1.8);
+    const dxBase = (t - 0.5) * spacing;
+    const dx = dxBase + (random() * 2 - 1) * step * 0.15;
     const centerBias = 1 - Math.abs(t - 0.5) * 2;
     const rise = flat ? 0.18 : 0.42;
-    const r = Math.min(1.05, 0.62 + centerBias * rise + (random() * 0.16 - 0.08));
-    const dy = (1 - r) + random() * 0.08;
+    const r = Math.min(1.1, 0.62 + centerBias * rise + (random() * 0.30 - 0.15));
+    const dy = (1 - r) + random() * 0.08 + (random() * 0.2 - 0.1);
     lobes.push({ dx, dy, r });
+  }
+  // Back-lobes add perceived volume depth behind the main silhouette (cumulus only).
+  if (!flat && count >= 5) {
+    const backCount = random() < 0.5 ? 1 : 2;
+    for (let b = 0; b < backCount; b++) {
+      const t = 0.3 + random() * 0.4;
+      const dx = (t - 0.5) * spacing * 0.8;
+      const r = Math.min(1.15, 0.85 + random() * 0.2);
+      const dy = (1 - r) + 0.05 + random() * 0.1;
+      lobes.push({ dx, dy, r, alpha: 0.45 });
+    }
   }
   return lobes;
 }
@@ -96,14 +107,14 @@ export function updateClouds(blobs: CloudBlob[], delta: number, width: number): 
 }
 
 // Cloud shapes never change, only their position — so render each one to a sprite
-// once and just blit it every frame. The lobes are drawn opaque to form a clean
-// silhouette (overlaps merge instead of darkening); the cloud's own translucency
-// is applied at composite time via globalAlpha.
+// once and blit it every frame. Each lobe is a radial gradient (solid core → transparent
+// rim) so overlaps merge smoothly; the cloud's overall translucency is applied at
+// composite time via globalAlpha. Sprites are keyed on condition:time and rebuilt on change.
 function buildSprite(b: CloudBlob, config: ResolvedConfig): OffscreenCanvas {
   const rx = b.width / 2;
   const ry = b.height / 2;
   const blurRadius = Math.max(2, ry * 0.12);
-  const pad = blurRadius * 3 + ry;
+  const pad = blurRadius * 4 + Math.max(ry, rx * 0.15);
   const offW = Math.ceil(b.width + pad * 2);
   const offH = Math.ceil(b.height + pad * 2);
   const off = new OffscreenCanvas(offW, offH);
@@ -129,23 +140,30 @@ function buildSprite(b: CloudBlob, config: ResolvedConfig): OffscreenCanvas {
     return off;
   }
 
-  c.filter = `blur(${blurRadius}px)`;
-  c.fillStyle = cloudColor(config, 1);
+  // Radial gradient per lobe: solid core fading to transparent at the rim.
+  // Overlapping gradients merge via alpha blending — no hard seam at intersections.
   for (const lobe of b.lobes) {
     const cx = lx + lobe.dx * rx;
     const cy = ly + lobe.dy * ry;
+    const radius = lobe.r * ry;
+    const la = lobe.alpha ?? 1;
+    const g = c.createRadialGradient(cx, cy, 0, cx, cy, radius);
+    g.addColorStop(0,    cloudColor(config, la));
+    g.addColorStop(0.55, cloudColor(config, la * 0.85));
+    g.addColorStop(0.80, cloudColor(config, la * 0.40));
+    g.addColorStop(1,    cloudColor(config, 0));
+    c.fillStyle = g;
     c.beginPath();
-    c.arc(cx, cy, lobe.r * ry, 0, Math.PI * 2);
+    c.arc(cx, cy, radius, 0, Math.PI * 2);
     c.fill();
   }
-  c.filter = 'none';
 
   // Vertical form shading, clipped to the cloud body: lit top, shaded base.
   c.globalCompositeOperation = 'source-atop';
   const day = config.time === 'day';
   const darkBase = config.condition === 'rain' || config.condition === 'storm' || config.condition === 'hail';
   const topLight = day ? 'rgba(255,244,214,0.22)' : 'rgba(190,205,235,0.10)';
-  const baseShade = darkBase ? 'rgba(0,0,0,0.30)' : 'rgba(0,0,0,0.16)';
+  const baseShade = darkBase ? 'rgba(0,0,0,0.35)' : day ? 'rgba(0,0,0,0.16)' : 'rgba(0,0,0,0.28)';
   const shade = c.createLinearGradient(0, ly - ry * 1.1, 0, ly + ry * 1.1);
   shade.addColorStop(0, topLight);
   shade.addColorStop(0.5, 'rgba(255,255,255,0)');
@@ -166,7 +184,11 @@ export function drawClouds(
   if (blobs.length === 0) return;
   ctx.save();
   for (const b of blobs) {
-    if (!b.sprite) b.sprite = buildSprite(b, config);
+    const key = `${config.condition}:${config.time}`;
+    if (!b.sprite || b.spriteKey !== key) {
+      b.sprite = buildSprite(b, config);
+      b.spriteKey = key;
+    }
     ctx.globalAlpha = alpha * b.alpha;
     ctx.drawImage(b.sprite, b.x - (b.spriteCx ?? 0), b.y - (b.spriteCy ?? 0));
   }

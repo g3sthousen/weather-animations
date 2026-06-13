@@ -46,6 +46,7 @@ export interface CloudLobe {
   dx: number;
   dy: number;
   r: number;
+  alpha?: number;  // undefined = 1.0; back-lobes set ~0.45
 }
 
 export interface CloudBlob {
@@ -60,6 +61,7 @@ export interface CloudBlob {
   sprite?: OffscreenCanvas;
   spriteCx?: number;
   spriteCy?: number;
+  spriteKey?: string;
 }
 
 export const VALID_CONDITIONS: Condition[] = ['clear', 'cloudy', 'rain', 'snow', 'storm', 'fog', 'wind', 'hail'];
