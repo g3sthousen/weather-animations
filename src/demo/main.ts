@@ -18,10 +18,10 @@ let activeTime: TimeOfDay = (params.get('time') as TimeOfDay) ?? 'day';
 let activeIntensity: Intensity = (params.get('intensity') as Intensity) ?? 'medium';
 let activeFidelity: Fidelity = (params.get('fidelity') as Fidelity) ?? 'subtle';
 
-const CONDITIONS: Condition[] = ['clear', 'cloudy', 'rain', 'snow', 'storm', 'fog', 'wind'];
+const CONDITIONS: Condition[] = ['clear', 'cloudy', 'rain', 'snow', 'storm', 'fog', 'wind', 'hail'];
 const CONDITION_LABELS: Record<Condition, string> = {
   clear: 'Clear', cloudy: 'Cloudy', rain: 'Rain',
-  snow: 'Snow', storm: 'Storm', fog: 'Fog', wind: 'Wind',
+  snow: 'Snow', storm: 'Storm', fog: 'Fog', wind: 'Wind', hail: 'Hail',
 };
 
 function render() {

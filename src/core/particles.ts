@@ -70,6 +70,16 @@ export function gustOffset(time: number, base: number, amp: number, freq: number
   return base + amp * Math.sin(time * freq);
 }
 
+/** Reflect and damp vertical velocity for a hail bounce. vy is positive (falling). */
+export function bounceVelocity(vy: number, damping: number): number {
+  return -vy * damping;
+}
+
+/** Returns true when a hail stone should stop bouncing. */
+export function shouldStopBouncing(vy: number, bounces: number, maxBounces: number, minVel: number): boolean {
+  return bounces >= maxBounces || Math.abs(vy) < minVel;
+}
+
 // --- Particle System ---
 
 const POOL_SIZE = 900;
@@ -139,6 +149,20 @@ export class ParticleSystem {
         continue;
       }
 
+      // Hail bounce — reflect and damp on ground hit; deactivate after max bounces or low velocity.
+      if (cfg.condition === 'hail' && p.kind === 'primary' && p.y > h) {
+        if (rich && !shouldStopBouncing(p.vy, p.bounces, 2, 80)) {
+          p.y = h;
+          p.vy = bounceVelocity(p.vy, 0.4);
+          p.vx += (random() - 0.5) * 60;
+          p.size *= 0.8;
+          p.bounces += 1;
+        } else {
+          p.active = false;
+        }
+        continue;
+      }
+
       if (p.y > h + 20 || p.x < -20 || p.x > w + 20 || p.y < -20) {
         p.active = false;
       }
@@ -149,6 +173,7 @@ export class ParticleSystem {
       'storm-rain': 280 * scale,
       snow: 30 * scale,
       wind: 60 * scale,
+      hail: 90 * scale,
     };
     const condKey = cfg.condition === 'storm' ? 'storm-rain' : cfg.condition;
     const rate = rates[condKey];
@@ -161,6 +186,7 @@ export class ParticleSystem {
         else if (cfg.condition === 'storm') spawnStormRain(this.pool, w);
         else if (cfg.condition === 'snow') spawnSnow(this.pool, w);
         else if (cfg.condition === 'wind') spawnWind(this.pool, w, h);
+        else if (cfg.condition === 'hail') spawnHail(this.pool, w);
       }
     }
   }
@@ -221,6 +247,18 @@ function drawParticle(ctx: CanvasRenderingContext2D, p: Particle, cfg: ResolvedC
     ctx.beginPath();
     ctx.moveTo(p.x, p.y);
     ctx.lineTo(p.x + p.length, p.y);
+    ctx.stroke();
+  } else if (cfg.condition === 'hail') {
+    ctx.fillStyle = `rgba(225,235,245,${p.alpha})`;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+    // faint rim shimmer
+    ctx.globalAlpha = systemAlpha * p.alpha * 0.5;
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+    ctx.lineWidth = 0.75;
+    ctx.beginPath();
+    ctx.arc(p.x - p.size * 0.25, p.y - p.size * 0.25, p.size * 0.6, 0, Math.PI * 2);
     ctx.stroke();
   }
 }
@@ -319,6 +357,23 @@ function spawnWind(pool: ParticlePool, w: number, h: number): void {
   p.length = 30 + random() * 60;
   p.phase = 0;
   p.depth = random();
+  p.bounces = 0;
+  p.kind = 'primary';
+}
+
+function spawnHail(pool: ParticlePool, w: number): void {
+  const p = pool.spawn();
+  if (!p) return;
+  const depth = random();
+  p.x = random() * (w + 60) - 30;
+  p.y = -10;
+  p.vx = -8 * depthFactor(depth, 0.5, 1);
+  p.vy = (700 + random() * 250) * depthFactor(depth, 0.55, 1);
+  p.alpha = (0.7 + random() * 0.3) * depthFactor(depth, 0.5, 1);
+  p.size = (2 + random() * 2.5) * depthFactor(depth, 0.5, 1);
+  p.length = 0;
+  p.phase = 0;
+  p.depth = depth;
   p.bounces = 0;
   p.kind = 'primary';
 }

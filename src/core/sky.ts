@@ -23,6 +23,8 @@ const SKY_PALETTES: Record<PaletteKey, SkyPalette> = {
   'fog:night':    { top: hexToRgb('#374151'), bottom: hexToRgb('#4b5563') },
   'wind:day':     { top: hexToRgb('#2563a8'), bottom: hexToRgb('#93c5fd') },
   'wind:night':   { top: hexToRgb('#1e3a5f'), bottom: hexToRgb('#1e3a8a') },
+  'hail:day':     { top: hexToRgb('#2f3b3a'), bottom: hexToRgb('#4a5a55') },
+  'hail:night':   { top: hexToRgb('#141c1b'), bottom: hexToRgb('#212e2b') },
 };
 
 function getPalette(config: ResolvedConfig): SkyPalette {

@@ -13,6 +13,9 @@ function cloudColor(config: ResolvedConfig, alpha: number): string {
   if (config.condition === 'storm') {
     return config.time === 'night' ? `rgba(26,26,42,${alpha})` : `rgba(42,42,58,${alpha})`;
   }
+  if (config.condition === 'hail') {
+    return config.time === 'night' ? `rgba(40,52,50,${alpha})` : `rgba(70,86,82,${alpha})`;
+  }
   if (config.condition === 'rain') {
     return config.time === 'night' ? `rgba(58,74,90,${alpha})` : `rgba(106,122,138,${alpha})`;
   }
@@ -22,6 +25,7 @@ function cloudColor(config: ResolvedConfig, alpha: number): string {
 
 function cloudAlpha(config: ResolvedConfig, layer: 0 | 1 | 2): number {
   const base = config.condition === 'storm' ? 0.9
+    : config.condition === 'hail' ? 0.85
     : config.condition === 'rain' ? 0.75
     : config.condition === 'wind' ? 0.55
     : config.condition === 'cloudy' ? 0.7

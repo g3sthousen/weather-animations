@@ -1,4 +1,4 @@
-export type Condition = 'clear' | 'cloudy' | 'rain' | 'snow' | 'storm' | 'fog' | 'wind';
+export type Condition = 'clear' | 'cloudy' | 'rain' | 'snow' | 'storm' | 'fog' | 'wind' | 'hail';
 export type Intensity = 'light' | 'medium' | 'heavy';
 export type TimeOfDay = 'day' | 'night';
 export type Fidelity = 'subtle' | 'rich';
@@ -62,7 +62,7 @@ export interface CloudBlob {
   spriteCy?: number;
 }
 
-export const VALID_CONDITIONS: Condition[] = ['clear', 'cloudy', 'rain', 'snow', 'storm', 'fog', 'wind'];
+export const VALID_CONDITIONS: Condition[] = ['clear', 'cloudy', 'rain', 'snow', 'storm', 'fog', 'wind', 'hail'];
 
 export function resolveConfig(config: WeatherConfig): ResolvedConfig {
   const condition: Condition = VALID_CONDITIONS.includes(config.condition as Condition)

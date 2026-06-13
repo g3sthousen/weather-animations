@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ParticlePool, getFidelityScale, depthFactor, rainSplashes, splashRadius, splashAlpha, gustOffset } from '../../src/core/particles';
+import { ParticlePool, getFidelityScale, depthFactor, rainSplashes, splashRadius, splashAlpha, gustOffset, bounceVelocity, shouldStopBouncing } from '../../src/core/particles';
 import { resolveConfig } from '../../src/core/types';
 
 describe('ParticlePool', () => {
@@ -100,5 +100,20 @@ describe('gustOffset', () => {
   it('oscillates within base ± amp', () => {
     const v = gustOffset(Math.PI / 2 / 0.5, -20, 10, 0.5);
     expect(v).toBeCloseTo(-10);
+  });
+});
+
+describe('hail bounce', () => {
+  it('reflects and damps vertical velocity', () => {
+    expect(bounceVelocity(900, 0.4)).toBeCloseTo(-360);
+  });
+  it('stops after max bounces', () => {
+    expect(shouldStopBouncing(-300, 2, 2, 80)).toBe(true);
+  });
+  it('stops when rebound velocity is negligible', () => {
+    expect(shouldStopBouncing(-50, 0, 2, 80)).toBe(true);
+  });
+  it('keeps bouncing while energetic and under the cap', () => {
+    expect(shouldStopBouncing(-300, 1, 2, 80)).toBe(false);
   });
 });
