@@ -72,8 +72,34 @@ function generateLobes(width: number, height: number, flat: boolean): CloudLobe[
 export function initClouds(config: ResolvedConfig, width: number, height: number): CloudBlob[] {
   if (!shouldShowClouds(config.condition)) return [];
   const blobs: CloudBlob[] = [];
-  const layers: (0 | 1 | 2)[] = config.condition === 'wind' ? [2] : [0, 1, 2];
   const countMul = INTENSITY_COUNT[config.intensity];
+
+  if (config.condition === 'storm') {
+    // Cumulonimbus: few massive towers, towering from top of sky downward.
+    // Fewer, taller, narrower than regular cumulus — no flat stratus shapes.
+    const stormCounts: [number, number, number] = [2, 2, 3];
+    for (const layer of [0, 1, 2] as const) {
+      const count = Math.max(1, Math.round(stormCounts[layer] * countMul));
+      const layerScale = 1 + layer * 0.4;
+      for (let i = 0; i < count; i++) {
+        const w = width * (0.18 + random() * 0.14) * layerScale;
+        const h = height * (0.30 + random() * 0.20) * layerScale;
+        blobs.push({
+          x: (i / count) * width * 1.3 - width * 0.15,
+          y: height * (layer * 0.07 + random() * 0.05) - h * 0.15,
+          width: w,
+          height: h,
+          alpha: cloudAlpha(config, layer),
+          speed: LAYER_SPEEDS[layer] * width,
+          layer,
+          lobes: generateLobes(w, h, false),
+        });
+      }
+    }
+    return blobs;
+  }
+
+  const layers: (0 | 1 | 2)[] = config.condition === 'wind' ? [2] : [0, 1, 2];
   for (const layer of layers) {
     const baseCount = config.condition === 'wind' ? 8 : LAYER_COUNTS[layer];
     const count = Math.max(2, Math.round(baseCount * countMul));
@@ -140,23 +166,24 @@ function buildSprite(b: CloudBlob, config: ResolvedConfig): OffscreenCanvas {
     return off;
   }
 
-  // Radial gradient per lobe: solid core fading to transparent at the rim.
-  // Overlapping gradients merge via alpha blending — no hard seam at intersections.
+  // Two-pass blob rendering: draw all lobes solid onto a temp canvas so their
+  // overlapping regions merge into one unified solid shape, then blit the whole
+  // result with blur. The blur softens only the outer silhouette — no individual
+  // circles visible inside the body. All lobes draw at full opacity; varying
+  // per-lobe alpha on the temp canvas creates hard steps that survive the blur.
+  const tmp = new OffscreenCanvas(offW, offH);
+  const tc = tmp.getContext('2d')!;
+  tc.fillStyle = cloudColor(config, 1);
   for (const lobe of b.lobes) {
     const cx = lx + lobe.dx * rx;
     const cy = ly + lobe.dy * ry;
-    const radius = lobe.r * ry;
-    const la = lobe.alpha ?? 1;
-    const g = c.createRadialGradient(cx, cy, 0, cx, cy, radius);
-    g.addColorStop(0,    cloudColor(config, la));
-    g.addColorStop(0.55, cloudColor(config, la * 0.85));
-    g.addColorStop(0.80, cloudColor(config, la * 0.40));
-    g.addColorStop(1,    cloudColor(config, 0));
-    c.fillStyle = g;
-    c.beginPath();
-    c.arc(cx, cy, radius, 0, Math.PI * 2);
-    c.fill();
+    tc.beginPath();
+    tc.arc(cx, cy, lobe.r * ry, 0, Math.PI * 2);
+    tc.fill();
   }
+  c.filter = `blur(${blurRadius}px)`;
+  c.drawImage(tmp, 0, 0);
+  c.filter = 'none';
 
   // Vertical form shading, clipped to the cloud body: lit top, shaded base.
   c.globalCompositeOperation = 'source-atop';
