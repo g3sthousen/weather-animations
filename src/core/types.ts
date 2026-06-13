@@ -25,7 +25,7 @@ export interface RGBColor {
   b: number;
 }
 
-export type ParticleKind = 'primary' | 'splash' | 'leaf';
+export type ParticleKind = 'primary' | 'splash' | 'leaf' | 'droplet';
 
 export interface Particle {
   x: number;

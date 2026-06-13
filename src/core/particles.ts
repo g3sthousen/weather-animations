@@ -131,6 +131,13 @@ export class ParticleSystem {
         continue;
       }
 
+      if (p.kind === 'droplet') {
+        p.vy += 500 * delta;
+        p.alpha -= delta * 4;
+        if (p.alpha <= 0 || p.y > h + 10) p.active = false;
+        continue;
+      }
+
       if (p.kind === 'leaf') {
         p.phase += delta * 6;
       }
@@ -145,12 +152,20 @@ export class ParticleSystem {
         p.alpha = 0.5 + 0.5 * Math.sin(p.phase * 2.5 + p.size);
       }
 
-      // Rain impact → splash at the bottom edge (intensity-gated; rich = more, bigger).
-      if (cfg.condition === 'rain' && p.kind === 'primary' && p.y > h && rainSplashes(cfg.intensity)) {
+      // Rain/storm impact → splash at the bottom edge (intensity-gated; rich = more, bigger).
+      if ((cfg.condition === 'rain' || cfg.condition === 'storm') && p.kind === 'primary' && p.y > h && rainSplashes(cfg.intensity)) {
         const threshold = rich ? 0.3 : 0.6;
-        if (p.depth > threshold) spawnSplash(this.pool, p.x, h, rich);
+        if (p.depth > threshold) {
+          spawnSplash(this.pool, p.x, h, rich, cfg.intensity);
+          if (rich) spawnDroplets(this.pool, p.x, h, 2 + Math.floor(random() * 3));
+        }
         p.active = false;
         continue;
+      }
+
+      // Gravity pulls bounced hail stones back down.
+      if (cfg.condition === 'hail' && p.bounces > 0) {
+        p.vy += 980 * delta;
       }
 
       // Hail bounce — reflect and damp on ground hit; deactivate after max bounces or low velocity.
@@ -208,13 +223,24 @@ export class ParticleSystem {
 }
 
 function drawParticle(ctx: CanvasRenderingContext2D, p: Particle, cfg: ResolvedConfig, systemAlpha: number): void {
+  if (p.kind === 'droplet') {
+    ctx.globalAlpha = systemAlpha * p.alpha;
+    ctx.fillStyle = 'rgba(180,205,225,1)';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+    return;
+  }
+
   if (p.kind === 'splash') {
     const r = splashRadius(p.phase, p.size, SPLASH_LIFE);
-    ctx.globalAlpha = systemAlpha * splashAlpha(p.phase, SPLASH_LIFE) * 0.6;
-    ctx.strokeStyle = 'rgba(180,200,220,1)';
-    ctx.lineWidth = 1;
+    const fade = splashAlpha(p.phase, SPLASH_LIFE);
+    const heavy = cfg.intensity === 'heavy';
+    ctx.globalAlpha = systemAlpha * fade * (heavy ? 0.9 : 0.75);
+    ctx.strokeStyle = 'rgba(180,205,225,1)';
+    ctx.lineWidth = heavy ? 2 : 1.5;
     ctx.beginPath();
-    ctx.ellipse(p.x, p.y, r, r * 0.4, 0, 0, Math.PI * 2);
+    ctx.ellipse(p.x, p.y, r, r * 0.35, 0, 0, Math.PI * 2);
     ctx.stroke();
     return;
   }
@@ -290,20 +316,41 @@ function drawParticle(ctx: CanvasRenderingContext2D, p: Particle, cfg: ResolvedC
   }
 }
 
-function spawnSplash(pool: ParticlePool, x: number, h: number, rich: boolean): void {
+const INTENSITY_SPLASH = { light: 1.0, medium: 1.4, heavy: 2.0 } as const;
+
+function spawnSplash(pool: ParticlePool, x: number, h: number, rich: boolean, intensity: ResolvedConfig['intensity']): void {
   const p = pool.spawn();
   if (!p) return;
+  const scale = INTENSITY_SPLASH[intensity];
   p.x = x;
   p.y = h - 1;
   p.vx = 0;
   p.vy = 0;
   p.alpha = 1;
-  p.size = rich ? 7 + random() * 4 : 4 + random() * 3; // max ring radius
+  p.size = (rich ? 8 + random() * 5 : 5 + random() * 3) * scale;
   p.length = 0;
-  p.phase = 0; // reused as age in seconds
+  p.phase = 0;
   p.depth = 1;
   p.bounces = 0;
   p.kind = 'splash';
+}
+
+function spawnDroplets(pool: ParticlePool, x: number, h: number, count: number): void {
+  for (let i = 0; i < count; i++) {
+    const p = pool.spawn();
+    if (!p) break;
+    p.x = x + (random() - 0.5) * 6;
+    p.y = h - 1;
+    p.vx = (random() - 0.5) * 180;
+    p.vy = -(50 + random() * 100);
+    p.alpha = 0.6 + random() * 0.4;
+    p.size = 1 + random() * 1.5;
+    p.length = 0;
+    p.phase = 0;
+    p.depth = 1;
+    p.bounces = 0;
+    p.kind = 'droplet';
+  }
 }
 
 function spawnRain(pool: ParticlePool, w: number): void {
