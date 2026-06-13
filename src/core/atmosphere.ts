@@ -1,4 +1,4 @@
-import type { MoonPhase, ResolvedConfig } from './types';
+import type { CelestialEvent, MoonPhase, ResolvedConfig } from './types';
 import { random } from './rng';
 
 interface FogPlume {
@@ -16,6 +16,34 @@ export function fogBob(time: number, baseY: number, amp: number, freq: number, p
   return baseY + amp * Math.sin(time * freq + phase);
 }
 
+interface CelestialPosition {
+  x: number;
+  y: number;
+}
+
+const NORMAL_CELESTIAL_POSITION: CelestialPosition = { x: 0.75, y: 0.18 };
+const ARC_CENTER_X = 0.5;
+const ARC_HORIZON_Y = 0.68;
+const ARC_RADIUS_X = 0.32;
+const ARC_RADIUS_Y = 0.5;
+const ARC_APEX_POSITION: CelestialPosition = { x: ARC_CENTER_X, y: ARC_HORIZON_Y - ARC_RADIUS_Y };
+
+export function celestialPosition(event: CelestialEvent, progress: number): CelestialPosition {
+  if (event === 'none') return NORMAL_CELESTIAL_POSITION;
+  const t = Math.min(1, Math.max(0, progress));
+  const rising = event === 'sunrise' || event === 'moonrise';
+  const arcProgress = rising ? t * 0.5 : 0.5 + t * 0.5;
+  const angle = Math.PI - Math.PI * arcProgress;
+  return {
+    x: Number((ARC_CENTER_X + Math.cos(angle) * ARC_RADIUS_X).toFixed(4)),
+    y: Number((ARC_HORIZON_Y - Math.sin(angle) * ARC_RADIUS_Y).toFixed(4)),
+  };
+}
+
+function celestialHorizonFactor(pos: CelestialPosition): number {
+  return Math.max(0, Math.min(1, (pos.y - ARC_APEX_POSITION.y) / (ARC_HORIZON_Y - ARC_APEX_POSITION.y)));
+}
+
 const CLOUDY_CELESTIAL_OPACITY: Record<ResolvedConfig['intensity'], number> = {
   light: 0.45,
   medium: 0.22,
@@ -23,6 +51,7 @@ const CLOUDY_CELESTIAL_OPACITY: Record<ResolvedConfig['intensity'], number> = {
 };
 
 export function getCelestialOpacity(config: ResolvedConfig): number {
+  if (config.celestialEvent !== 'none') return 1;
   if (config.condition === 'cloudy') {
     return CLOUDY_CELESTIAL_OPACITY[config.intensity];
   }
@@ -113,6 +142,8 @@ export function drawAtmosphere(
   ctx.save();
   ctx.globalAlpha = alpha;
 
+  drawCelestialEventOverlay(ctx, config, alpha, width, height);
+
   if (config.condition === 'fog') {
     drawFog(ctx, config, state, width, height);
   }
@@ -161,10 +192,68 @@ export function drawCelestial(
 
   ctx.save();
   ctx.globalAlpha = alpha * opacity;
-  if (config.time === 'day') {
+  if (isSunEvent(config.celestialEvent) || (config.celestialEvent === 'none' && config.time === 'day')) {
     drawSun(ctx, config, state, width, height);
   } else {
     drawMoon(ctx, config, width, height);
+  }
+  ctx.restore();
+}
+
+function isSunEvent(event: CelestialEvent): boolean {
+  return event === 'sunrise' || event === 'sunset';
+}
+
+function isMoonEvent(event: CelestialEvent): boolean {
+  return event === 'moonrise' || event === 'moonset';
+}
+
+function drawCelestialEventOverlay(
+  ctx: CanvasRenderingContext2D,
+  config: ResolvedConfig,
+  alpha: number,
+  width: number,
+  height: number,
+): void {
+  if (config.celestialEvent === 'none') return;
+  const pos = celestialPosition(config.celestialEvent, config.celestialProgress);
+  const nearHorizon = celestialHorizonFactor(pos);
+
+  ctx.save();
+  if (isSunEvent(config.celestialEvent)) {
+    ctx.globalAlpha = alpha * (0.35 + nearHorizon * 0.25);
+    const sky = ctx.createLinearGradient(0, 0, 0, height);
+    sky.addColorStop(0, 'rgba(70,95,155,0.10)');
+    sky.addColorStop(0.58, 'rgba(255,132,92,0.14)');
+    sky.addColorStop(1, 'rgba(255,190,92,0.42)');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.globalAlpha = alpha * (0.2 + nearHorizon * 0.28);
+    const glowX = width * pos.x;
+    const glowY = height * pos.y;
+    const glowR = Math.max(width, height) * (0.38 + nearHorizon * 0.16);
+    const horizon = ctx.createRadialGradient(glowX, glowY, 0, glowX, glowY, glowR);
+    horizon.addColorStop(0, 'rgba(255,190,90,0.5)');
+    horizon.addColorStop(0.45, 'rgba(255,150,90,0.22)');
+    horizon.addColorStop(1, 'rgba(255,120,80,0)');
+    ctx.fillStyle = horizon;
+    ctx.fillRect(0, 0, width, height);
+  } else if (isMoonEvent(config.celestialEvent)) {
+    ctx.globalAlpha = alpha * (0.18 + nearHorizon * 0.14);
+    const sky = ctx.createLinearGradient(0, 0, 0, height);
+    sky.addColorStop(0, 'rgba(50,70,130,0)');
+    sky.addColorStop(0.65, 'rgba(95,120,170,0.08)');
+    sky.addColorStop(1, 'rgba(120,145,190,0.24)');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.globalAlpha = alpha * (0.15 + nearHorizon * 0.12);
+    const horizon = ctx.createRadialGradient(width * pos.x, height * 0.92, 0, width * pos.x, height * 0.92, width * 0.4);
+    horizon.addColorStop(0, 'rgba(150,175,220,0.35)');
+    horizon.addColorStop(1, 'rgba(150,175,220,0)');
+    ctx.fillStyle = horizon;
+    ctx.fillRect(0, height * 0.5, width, height * 0.5);
   }
   ctx.restore();
 }
@@ -244,17 +333,21 @@ function drawLightningBolt(
 }
 
 function drawSun(ctx: CanvasRenderingContext2D, config: ResolvedConfig, state: AtmosphereState, width: number, height: number): void {
-  const x = width * 0.75;
-  const y = height * 0.18;
-  const r = Math.min(width, height) * 0.08;
+  const pos = celestialPosition(config.celestialEvent, config.celestialProgress);
+  const x = width * pos.x;
+  const y = height * pos.y;
+  const eventActive = isSunEvent(config.celestialEvent);
+  const lowBoost = eventActive ? celestialHorizonFactor(pos) : 0;
+  const r = Math.min(width, height) * (0.08 + lowBoost * 0.02);
 
   // softer, larger atmospheric halo
-  const outerGrad = ctx.createRadialGradient(x, y, r * 0.4, x, y, r * 4);
-  outerGrad.addColorStop(0, 'rgba(255,240,180,0.45)');
-  outerGrad.addColorStop(0.5, 'rgba(255,240,180,0.12)');
+  const outerGrad = ctx.createRadialGradient(x, y, r * 0.4, x, y, r * (4 + lowBoost * 2));
+  outerGrad.addColorStop(0, `rgba(255,220,150,${0.45 + lowBoost * 0.2})`);
+  outerGrad.addColorStop(0.5, `rgba(255,170,110,${0.12 + lowBoost * 0.12})`);
   outerGrad.addColorStop(1, 'rgba(255,240,180,0)');
+  const haloR = r * (4 + lowBoost * 2);
   ctx.fillStyle = outerGrad;
-  ctx.fillRect(x - r * 4, y - r * 4, r * 8, r * 8);
+  ctx.fillRect(x - haloR, y - haloR, haloR * 2, haloR * 2);
 
   if (config.fidelity === 'rich') {
     ctx.save();
@@ -283,8 +376,9 @@ function drawSun(ctx: CanvasRenderingContext2D, config: ResolvedConfig, state: A
 }
 
 function drawMoon(ctx: CanvasRenderingContext2D, config: ResolvedConfig, width: number, height: number): void {
-  const x = width * 0.75;
-  const y = height * 0.18;
+  const pos = celestialPosition(config.celestialEvent, config.celestialProgress);
+  const x = width * pos.x;
+  const y = height * pos.y;
   const r = Math.min(width, height) * 0.06;
   const phase = config.moonPhase;
   const isNew = phase === 'new';

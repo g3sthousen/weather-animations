@@ -2,6 +2,7 @@ export type Condition = 'clear' | 'cloudy' | 'rain' | 'snow' | 'storm' | 'fog' |
 export type Intensity = 'light' | 'medium' | 'heavy';
 export type TimeOfDay = 'day' | 'night';
 export type Fidelity = 'subtle' | 'rich';
+export type CelestialEvent = 'none' | 'sunrise' | 'sunset' | 'moonrise' | 'moonset';
 export type MoonPhase =
   | 'new'
   | 'waxing-crescent'
@@ -19,6 +20,8 @@ export interface WeatherConfig {
   transitionMs?: number;
   fidelity?: Fidelity;
   moonPhase?: MoonPhase;
+  celestialEvent?: CelestialEvent;
+  celestialProgress?: number;
 }
 
 export interface ResolvedConfig {
@@ -28,6 +31,8 @@ export interface ResolvedConfig {
   transitionMs: number;
   fidelity: Fidelity;
   moonPhase: MoonPhase;
+  celestialEvent: CelestialEvent;
+  celestialProgress: number;
 }
 
 export interface RGBColor {
@@ -76,6 +81,7 @@ export interface CloudBlob {
 }
 
 export const VALID_CONDITIONS: Condition[] = ['clear', 'cloudy', 'rain', 'snow', 'storm', 'fog', 'wind', 'hail'];
+export const VALID_CELESTIAL_EVENTS: CelestialEvent[] = ['none', 'sunrise', 'sunset', 'moonrise', 'moonset'];
 export const VALID_MOON_PHASES: MoonPhase[] = [
   'new',
   'waxing-crescent',
@@ -94,6 +100,11 @@ export function resolveConfig(config: WeatherConfig): ResolvedConfig {
   const moonPhase: MoonPhase = VALID_MOON_PHASES.includes(config.moonPhase as MoonPhase)
     ? config.moonPhase as MoonPhase
     : 'full';
+  const celestialEvent: CelestialEvent = VALID_CELESTIAL_EVENTS.includes(config.celestialEvent as CelestialEvent)
+    ? config.celestialEvent as CelestialEvent
+    : 'none';
+  const rawCelestialProgress = config.celestialProgress ?? 0.5;
+  const celestialProgress = Math.min(1, Math.max(0, Number.isFinite(rawCelestialProgress) ? rawCelestialProgress : 0.5));
   return {
     condition,
     intensity: config.intensity ?? 'medium',
@@ -101,5 +112,7 @@ export function resolveConfig(config: WeatherConfig): ResolvedConfig {
     transitionMs: config.transitionMs ?? 1200,
     fidelity: config.fidelity ?? 'subtle',
     moonPhase,
+    celestialEvent,
+    celestialProgress,
   };
 }

@@ -1,6 +1,6 @@
 // tests/unit/atmosphere.test.ts
 import { describe, it, expect } from 'vitest';
-import { fogBob, getCelestialOpacity } from '../../src/core/atmosphere';
+import { celestialPosition, fogBob, getCelestialOpacity } from '../../src/core/atmosphere';
 import { resolveConfig } from '../../src/core/types';
 
 describe('fogBob', () => {
@@ -31,5 +31,52 @@ describe('getCelestialOpacity', () => {
   it('does not add celestial bodies to rainy or windy nights', () => {
     expect(getCelestialOpacity(resolveConfig({ condition: 'rain', time: 'day' }))).toBe(0);
     expect(getCelestialOpacity(resolveConfig({ condition: 'wind', time: 'night' }))).toBe(0);
+  });
+});
+
+describe('celestialPosition', () => {
+  it('keeps none events at the normal sky position', () => {
+    expect(celestialPosition('none', 0)).toEqual({ x: 0.75, y: 0.18 });
+    expect(celestialPosition('none', 1)).toEqual({ x: 0.75, y: 0.18 });
+  });
+
+  it('moves sunrise and moonrise from the left horizon to the top of the arc', () => {
+    const sunriseStart = celestialPosition('sunrise', 0);
+    const sunriseMid = celestialPosition('sunrise', 0.5);
+    const sunriseEnd = celestialPosition('sunrise', 1);
+    const moonriseStart = celestialPosition('moonrise', 0);
+    const moonriseMid = celestialPosition('moonrise', 0.5);
+    const moonriseEnd = celestialPosition('moonrise', 1);
+
+    expect(sunriseStart.y).toBeGreaterThan(sunriseEnd.y);
+    expect(moonriseStart.y).toBeGreaterThan(moonriseEnd.y);
+    expect(sunriseStart.x).toBeLessThan(sunriseMid.x);
+    expect(sunriseMid.x).toBeLessThan(sunriseEnd.x);
+    expect(moonriseStart.x).toBeLessThan(moonriseMid.x);
+    expect(moonriseMid.x).toBeLessThan(moonriseEnd.x);
+    expect(sunriseStart).toEqual({ x: 0.18, y: 0.68 });
+    expect(sunriseEnd).toEqual({ x: 0.5, y: 0.18 });
+    expect(moonriseStart).toEqual(sunriseStart);
+    expect(moonriseEnd).toEqual(sunriseEnd);
+  });
+
+  it('moves sunset and moonset from the top of the arc to the right horizon', () => {
+    const sunsetStart = celestialPosition('sunset', 0);
+    const sunsetMid = celestialPosition('sunset', 0.5);
+    const sunsetEnd = celestialPosition('sunset', 1);
+    const moonsetStart = celestialPosition('moonset', 0);
+    const moonsetMid = celestialPosition('moonset', 0.5);
+    const moonsetEnd = celestialPosition('moonset', 1);
+
+    expect(sunsetStart.y).toBeLessThan(sunsetEnd.y);
+    expect(moonsetStart.y).toBeLessThan(moonsetEnd.y);
+    expect(sunsetStart.x).toBeLessThan(sunsetMid.x);
+    expect(sunsetMid.x).toBeLessThan(sunsetEnd.x);
+    expect(moonsetStart.x).toBeLessThan(moonsetMid.x);
+    expect(moonsetMid.x).toBeLessThan(moonsetEnd.x);
+    expect(sunsetStart).toEqual({ x: 0.5, y: 0.18 });
+    expect(sunsetEnd).toEqual({ x: 0.82, y: 0.68 });
+    expect(moonsetStart).toEqual(sunsetStart);
+    expect(moonsetEnd).toEqual(sunsetEnd);
   });
 });

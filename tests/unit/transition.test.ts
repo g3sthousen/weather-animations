@@ -7,8 +7,26 @@ import {
 } from '../../src/core/transition';
 import type { ResolvedConfig } from '../../src/core/types';
 
-const cfgA: ResolvedConfig = { condition: 'clear', intensity: 'medium', time: 'day', transitionMs: 1000, fidelity: 'subtle', moonPhase: 'full' };
-const cfgB: ResolvedConfig = { condition: 'rain', intensity: 'heavy', time: 'night', transitionMs: 1000, fidelity: 'subtle', moonPhase: 'full' };
+const cfgA: ResolvedConfig = {
+  condition: 'clear',
+  intensity: 'medium',
+  time: 'day',
+  transitionMs: 1000,
+  fidelity: 'subtle',
+  moonPhase: 'full',
+  celestialEvent: 'none',
+  celestialProgress: 0.5,
+};
+const cfgB: ResolvedConfig = {
+  condition: 'rain',
+  intensity: 'heavy',
+  time: 'night',
+  transitionMs: 1000,
+  fidelity: 'subtle',
+  moonPhase: 'full',
+  celestialEvent: 'none',
+  celestialProgress: 0.5,
+};
 
 describe('createTransition', () => {
   it('creates transition with elapsed 0', () => {

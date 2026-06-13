@@ -56,3 +56,7 @@ button.active { background: rgba(255,255,255,0.5); color: #111; text-shadow: non
   padding: 7px 12px;
   font-size: 13px;
 }
+
+.progress-row button {
+  min-width: 52px;
+}

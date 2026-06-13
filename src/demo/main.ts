@@ -1,5 +1,5 @@
 import { WeatherScene } from '../core/index';
-import type { Condition, Intensity, TimeOfDay, Fidelity, MoonPhase } from '../core/index';
+import type { CelestialEvent, Condition, Intensity, TimeOfDay, Fidelity, MoonPhase } from '../core/index';
 import { seedRng } from '../core/rng';
 
 const container = document.getElementById('weather-container')!;
@@ -18,6 +18,9 @@ let activeTime: TimeOfDay = (params.get('time') as TimeOfDay) ?? 'day';
 let activeIntensity: Intensity = (params.get('intensity') as Intensity) ?? 'medium';
 let activeFidelity: Fidelity = (params.get('fidelity') as Fidelity) ?? 'subtle';
 let activeMoonPhase: MoonPhase = (params.get('moonPhase') as MoonPhase) ?? 'full';
+let activeCelestialEvent: CelestialEvent = (params.get('celestialEvent') as CelestialEvent) ?? 'none';
+let activeCelestialProgress = Number(params.get('celestialProgress') ?? 0.5);
+if (!Number.isFinite(activeCelestialProgress)) activeCelestialProgress = 0.5;
 
 const CONDITIONS: Condition[] = ['clear', 'cloudy', 'rain', 'snow', 'storm', 'fog', 'wind', 'hail'];
 const CONDITION_LABELS: Record<Condition, string> = {
@@ -44,6 +47,15 @@ const MOON_PHASE_LABELS: Record<MoonPhase, string> = {
   'last-quarter': 'Last Q.',
   'waning-crescent': 'Wan Cr.',
 };
+const CELESTIAL_EVENTS: CelestialEvent[] = ['none', 'sunrise', 'sunset', 'moonrise', 'moonset'];
+const CELESTIAL_EVENT_LABELS: Record<CelestialEvent, string> = {
+  none: 'None',
+  sunrise: 'Sunrise',
+  sunset: 'Sunset',
+  moonrise: 'Moonrise',
+  moonset: 'Moonset',
+};
+const CELESTIAL_PROGRESS_STEPS = [0, 0.25, 0.5, 0.75, 1] as const;
 
 function render() {
   scene.set({
@@ -52,6 +64,8 @@ function render() {
     intensity: activeIntensity,
     fidelity: activeFidelity,
     moonPhase: activeMoonPhase,
+    celestialEvent: activeCelestialEvent,
+    celestialProgress: activeCelestialProgress,
   });
 }
 
@@ -112,11 +126,33 @@ function buildControls() {
     moonRow.appendChild(btn);
   }
 
+  const eventRow = document.createElement('div');
+  eventRow.className = 'btn-row';
+  for (const event of CELESTIAL_EVENTS) {
+    const btn = document.createElement('button');
+    btn.textContent = CELESTIAL_EVENT_LABELS[event];
+    if (event === activeCelestialEvent) btn.classList.add('active');
+    btn.addEventListener('click', () => { activeCelestialEvent = event; buildControls(); render(); });
+    eventRow.appendChild(btn);
+  }
+
+  const progressRow = document.createElement('div');
+  progressRow.className = 'btn-row progress-row';
+  for (const progress of CELESTIAL_PROGRESS_STEPS) {
+    const btn = document.createElement('button');
+    btn.textContent = `${Math.round(progress * 100)}%`;
+    if (Math.abs(progress - activeCelestialProgress) < 0.001) btn.classList.add('active');
+    btn.addEventListener('click', () => { activeCelestialProgress = progress; buildControls(); render(); });
+    progressRow.appendChild(btn);
+  }
+
   controlsEl.appendChild(condRow);
   controlsEl.appendChild(timeRow);
   controlsEl.appendChild(intRow);
   controlsEl.appendChild(fidRow);
   controlsEl.appendChild(moonRow);
+  controlsEl.appendChild(eventRow);
+  controlsEl.appendChild(progressRow);
 }
 
 buildControls();
