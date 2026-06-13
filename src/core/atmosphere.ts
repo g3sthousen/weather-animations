@@ -22,10 +22,12 @@ export interface AtmosphereState {
   boltPoints: Array<[number, number]> | null;
   time: number;
   fogPlumes: FogPlume[] | null;
+  preflicker: number;       // brief pre-strike flicker [0..1]
+  boltBranches: Array<Array<[number, number]>> | null;
 }
 
 export function createAtmosphereState(): AtmosphereState {
-  return { lightningFlash: 0, lightningTimer: 2000, boltPoints: null, time: 0, fogPlumes: null };
+  return { lightningFlash: 0, lightningTimer: 2000, boltPoints: null, time: 0, fogPlumes: null, preflicker: 0, boltBranches: null };
 }
 
 export function updateAtmosphere(state: AtmosphereState, config: ResolvedConfig, delta: number): void {
@@ -33,18 +35,32 @@ export function updateAtmosphere(state: AtmosphereState, config: ResolvedConfig,
 
   if (config.condition === 'storm') {
     state.lightningTimer -= delta * 1000;
-    if (state.lightningTimer <= 0) {
-      state.lightningFlash = 1.0;
-      const base = config.intensity === 'heavy' ? 1500 : config.intensity === 'medium' ? 2500 : 4000;
-      state.lightningTimer = base + random() * base;
-      state.boltPoints = generateBolt();
+    if (state.lightningTimer <= 0 && state.preflicker <= 0 && state.lightningFlash <= 0) {
+      state.preflicker = 1; // start pre-flicker; main strike follows
+    }
+    if (state.preflicker > 0) {
+      state.preflicker = Math.max(0, state.preflicker - delta * 12);
+      if (state.preflicker <= 0) {
+        // main strike
+        state.lightningFlash = 1.0;
+        const base = config.intensity === 'heavy' ? 1500 : config.intensity === 'medium' ? 2500 : 4000;
+        state.lightningTimer = base + random() * base;
+        const main = generateBolt();
+        state.boltPoints = main;
+        state.boltBranches = generateBranches(main);
+      }
     }
     state.lightningFlash = Math.max(0, state.lightningFlash - delta * 3.5);
-    if (state.lightningFlash <= 0) state.boltPoints = null;
+    if (state.lightningFlash <= 0) {
+      state.boltPoints = null;
+      state.boltBranches = null;
+    }
   } else {
     state.lightningFlash = 0;
     state.lightningTimer = 2000;
     state.boltPoints = null;
+    state.preflicker = 0;
+    state.boltBranches = null;
   }
 
   if (config.condition === 'fog') {
@@ -90,14 +106,32 @@ export function drawAtmosphere(
     drawFog(ctx, config, state, width, height);
   }
 
-  if (state.lightningFlash > 0) {
-    ctx.globalAlpha = alpha * state.lightningFlash * 0.45;
+  const flash = Math.max(state.lightningFlash, state.preflicker * 0.4);
+  if (flash > 0) {
+    ctx.globalAlpha = alpha * flash * 0.45;
     ctx.fillStyle = 'rgba(200,220,255,1)';
     ctx.fillRect(0, 0, width, height);
 
-    if (state.boltPoints) {
+    if (state.boltPoints && state.lightningFlash > 0) {
       drawLightningBolt(ctx, state.boltPoints, alpha * state.lightningFlash, width, height);
+      if (state.boltBranches) {
+        for (const br of state.boltBranches) {
+          drawLightningBolt(ctx, br, alpha * state.lightningFlash * 0.7, width, height);
+        }
+      }
     }
+  }
+
+  if (config.fidelity === 'rich' && state.lightningFlash > 0 && config.condition === 'storm') {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = alpha * state.lightningFlash * 0.5;
+    const g = ctx.createLinearGradient(0, 0, 0, height * 0.5);
+    g.addColorStop(0, 'rgba(150,180,255,0.6)');
+    g.addColorStop(1, 'rgba(150,180,255,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, width, height * 0.5);
+    ctx.restore();
   }
 
   ctx.restore();
@@ -113,6 +147,26 @@ function generateBolt(): Array<[number, number]> {
     points.push([cx, 0.08 + (0.52 * i) / 8]);
   }
   return points;
+}
+
+function generateBranches(main: Array<[number, number]>): Array<Array<[number, number]>> {
+  const branches: Array<Array<[number, number]>> = [];
+  const n = 1 + Math.floor(random() * 2); // 1–2 branches
+  for (let b = 0; b < n; b++) {
+    const startIdx = 2 + Math.floor(random() * (main.length - 3));
+    const [sx, sy] = main[startIdx];
+    let cx = sx;
+    let cy = sy;
+    const pts: Array<[number, number]> = [[cx, cy]];
+    const dir = random() < 0.5 ? -1 : 1;
+    for (let i = 0; i < 3; i++) {
+      cx = Math.max(0.02, Math.min(0.98, cx + dir * (0.04 + random() * 0.05)));
+      cy = Math.min(0.95, cy + 0.06 + random() * 0.05);
+      pts.push([cx, cy]);
+    }
+    branches.push(pts);
+  }
+  return branches;
 }
 
 function drawLightningBolt(

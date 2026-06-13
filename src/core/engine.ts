@@ -108,7 +108,7 @@ export function renderEngine(
     if (state.transAtmo) drawAtmosphere(ctx, to, state.transAtmo, progress, width, height);
     if (state.transPS) state.transPS.draw(ctx, progress, to);
   } else {
-    applySky(skyEl, state.current);
+    applySky(skyEl, state.current, state.currentAtmo.lightningFlash);
     drawClouds(ctx, state.currentClouds, state.current, 1);
     drawAtmosphere(ctx, state.current, state.currentAtmo, 1, width, height);
     state.currentPS.draw(ctx, 1, state.current);

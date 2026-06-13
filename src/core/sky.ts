@@ -1,5 +1,5 @@
 import type { RGBColor, ResolvedConfig, Condition, TimeOfDay } from './types';
-import { hexToRgb, lerpColor, rgbToString } from './math';
+import { hexToRgb, lerp, lerpColor, rgbToString } from './math';
 
 interface SkyPalette {
   top: RGBColor;
@@ -31,9 +31,19 @@ function getPalette(config: ResolvedConfig): SkyPalette {
   return SKY_PALETTES[`${config.condition}:${config.time}`];
 }
 
-export function applySky(el: HTMLElement, config: ResolvedConfig): void {
+function brighten(c: RGBColor, amount: number): RGBColor {
+  return {
+    r: Math.round(lerp(c.r, 255, amount)),
+    g: Math.round(lerp(c.g, 255, amount)),
+    b: Math.round(lerp(c.b, 255, amount)),
+  };
+}
+
+export function applySky(el: HTMLElement, config: ResolvedConfig, flash = 0): void {
   const p = getPalette(config);
-  el.style.background = `linear-gradient(to bottom, ${rgbToString(p.top)}, ${rgbToString(p.bottom)})`;
+  const top = flash > 0 ? brighten(p.top, flash * 0.4) : p.top;
+  const bottom = flash > 0 ? brighten(p.bottom, flash * 0.4) : p.bottom;
+  el.style.background = `linear-gradient(to bottom, ${rgbToString(top)}, ${rgbToString(bottom)})`;
 }
 
 export function lerpSky(
