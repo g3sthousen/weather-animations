@@ -1,15 +1,31 @@
 import type { ResolvedConfig } from './types';
 import { random } from './rng';
 
+interface FogPlume {
+  baseX: number;   // 0..1 of width
+  baseY: number;   // 0..1 of height
+  speed: number;   // fraction of width per second
+  bobAmp: number;  // px
+  bobFreq: number;
+  phase: number;
+  sprite?: OffscreenCanvas;
+  spriteR?: number;
+}
+
+export function fogBob(time: number, baseY: number, amp: number, freq: number, phase: number): number {
+  return baseY + amp * Math.sin(time * freq + phase);
+}
+
 export interface AtmosphereState {
   lightningFlash: number;
   lightningTimer: number;
   boltPoints: Array<[number, number]> | null;
   time: number;
+  fogPlumes: FogPlume[] | null;
 }
 
 export function createAtmosphereState(): AtmosphereState {
-  return { lightningFlash: 0, lightningTimer: 2000, boltPoints: null, time: 0 };
+  return { lightningFlash: 0, lightningTimer: 2000, boltPoints: null, time: 0, fogPlumes: null };
 }
 
 export function updateAtmosphere(state: AtmosphereState, config: ResolvedConfig, delta: number): void {
@@ -29,6 +45,25 @@ export function updateAtmosphere(state: AtmosphereState, config: ResolvedConfig,
     state.lightningFlash = 0;
     state.lightningTimer = 2000;
     state.boltPoints = null;
+  }
+
+  if (config.condition === 'fog') {
+    if (!state.fogPlumes) {
+      state.fogPlumes = Array.from({ length: 4 }, (_, i) => ({
+        baseX: random(),
+        baseY: 0.45 + i * 0.14 + random() * 0.06,
+        speed: 0.01 + random() * 0.02,
+        bobAmp: 8 + random() * 10,
+        bobFreq: 0.15 + random() * 0.15,
+        phase: random() * Math.PI * 2,
+      }));
+    }
+    for (const pl of state.fogPlumes) {
+      pl.baseX += pl.speed * delta;
+      if (pl.baseX > 1.3) pl.baseX -= 1.6;
+    }
+  } else {
+    state.fogPlumes = null;
   }
 }
 
@@ -52,7 +87,7 @@ export function drawAtmosphere(
   }
 
   if (config.condition === 'fog') {
-    drawFog(ctx, config, width, height);
+    drawFog(ctx, config, state, width, height);
   }
 
   if (state.lightningFlash > 0) {
@@ -165,16 +200,43 @@ function drawMoon(ctx: CanvasRenderingContext2D, width: number, height: number):
   ctx.fill();
 }
 
-function drawFog(ctx: CanvasRenderingContext2D, config: ResolvedConfig, width: number, height: number): void {
-  const fogColor = config.time === 'night' ? 'rgba(80,90,100,' : 'rgba(200,205,210,';
-  const bands = 5;
-  for (let i = 0; i < bands; i++) {
-    const y = (height / bands) * i + height * 0.1;
-    const grad = ctx.createLinearGradient(0, y, 0, y + height * 0.2);
-    grad.addColorStop(0, `${fogColor}0)`);
-    grad.addColorStop(0.5, `${fogColor}0.18)`);
-    grad.addColorStop(1, `${fogColor}0)`);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, y, width, height * 0.2);
+function buildPlumeSprite(radius: number, night: boolean): OffscreenCanvas {
+  const size = Math.ceil(radius * 2);
+  const off = new OffscreenCanvas(size, size);
+  const c = off.getContext('2d')!;
+  const rgb = night ? '90,100,112' : '205,210,216';
+  const g = c.createRadialGradient(radius, radius, 0, radius, radius, radius);
+  g.addColorStop(0, `rgba(${rgb},0.5)`);
+  g.addColorStop(0.5, `rgba(${rgb},0.22)`);
+  g.addColorStop(1, `rgba(${rgb},0)`);
+  c.fillStyle = g;
+  c.beginPath();
+  c.arc(radius, radius, radius, 0, Math.PI * 2);
+  c.fill();
+  return off;
+}
+
+function drawFog(
+  ctx: CanvasRenderingContext2D,
+  config: ResolvedConfig,
+  state: AtmosphereState,
+  width: number,
+  height: number,
+): void {
+  if (!state.fogPlumes) return;
+  const night = config.time === 'night';
+  const radius = width * 0.4;
+  for (const pl of state.fogPlumes) {
+    if (!pl.sprite || pl.spriteR !== radius) {
+      pl.sprite = buildPlumeSprite(radius, night);
+      pl.spriteR = radius;
+    }
+    const x = pl.baseX * width - radius;
+    const y = fogBob(state.time, pl.baseY * height, pl.bobAmp, pl.bobFreq, pl.phase) - radius;
+    ctx.drawImage(pl.sprite, x, y);
+    // wrap copy so the plume re-enters from the left seamlessly
+    if (pl.baseX * width - radius > width - radius * 2) {
+      ctx.drawImage(pl.sprite, x - width - radius * 2, y);
+    }
   }
 }
