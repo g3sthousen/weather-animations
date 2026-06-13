@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ParticlePool, getFidelityScale } from '../../src/core/particles';
+import { ParticlePool, getFidelityScale, depthFactor } from '../../src/core/particles';
 import { resolveConfig } from '../../src/core/types';
 
 describe('ParticlePool', () => {
@@ -57,5 +57,17 @@ describe('getFidelityScale', () => {
   });
   it('is 1.8 at rich', () => {
     expect(getFidelityScale(resolveConfig({ condition: 'rain', fidelity: 'rich' }))).toBeCloseTo(1.8);
+  });
+});
+
+describe('depthFactor', () => {
+  it('returns far value at depth 0', () => {
+    expect(depthFactor(0, 0.4, 1)).toBeCloseTo(0.4);
+  });
+  it('returns near value at depth 1', () => {
+    expect(depthFactor(1, 0.4, 1)).toBeCloseTo(1);
+  });
+  it('interpolates linearly at depth 0.5', () => {
+    expect(depthFactor(0.5, 0.4, 1)).toBeCloseTo(0.7);
   });
 });

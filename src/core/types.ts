@@ -25,6 +25,8 @@ export interface RGBColor {
   b: number;
 }
 
+export type ParticleKind = 'primary' | 'splash' | 'leaf';
+
 export interface Particle {
   x: number;
   y: number;
@@ -34,6 +36,9 @@ export interface Particle {
   size: number;
   length: number;
   phase: number;
+  depth: number;     // 0 = far (small/slow/faint), 1 = near (large/fast/strong)
+  bounces: number;   // hail bounce count; ignored by other kinds
+  kind: ParticleKind;
   active: boolean;
 }
 

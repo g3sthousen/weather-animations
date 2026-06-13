@@ -9,6 +9,7 @@ export class ParticlePool {
     this.particles = Array.from({ length: size }, () => ({
       x: 0, y: 0, vx: 0, vy: 0,
       alpha: 0, size: 1, length: 1, phase: 0,
+      depth: 0.5, bounces: 0, kind: 'primary' as const,
       active: false,
     }));
   }
@@ -42,6 +43,11 @@ const FIDELITY_SCALE = { subtle: 1, rich: 1.8 } as const;
 
 export function getFidelityScale(config: ResolvedConfig): number {
   return FIDELITY_SCALE[config.fidelity];
+}
+
+/** Map depth (0 far … 1 near) to a scale between `far` and `near`. */
+export function depthFactor(depth: number, far: number, near: number): number {
+  return far + (near - far) * depth;
 }
 
 // --- Particle System ---
@@ -144,7 +150,14 @@ function drawParticle(ctx: CanvasRenderingContext2D, p: Particle, cfg: ResolvedC
     ctx.lineTo(p.x + p.vx * 0.04, p.y + p.length);
     ctx.stroke();
   } else if (cfg.condition === 'snow') {
-    ctx.fillStyle = `rgba(255,255,255,${p.alpha})`;
+    if (p.depth < 0.5) {
+      const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+      g.addColorStop(0, `rgba(255,255,255,${p.alpha})`);
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g;
+    } else {
+      ctx.fillStyle = `rgba(255,255,255,${p.alpha})`;
+    }
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
     ctx.fill();
@@ -166,14 +179,18 @@ function drawParticle(ctx: CanvasRenderingContext2D, p: Particle, cfg: ResolvedC
 function spawnRain(pool: ParticlePool, w: number): void {
   const p = pool.spawn();
   if (!p) return;
+  const depth = random();
   p.x = random() * (w + 100) - 50;
   p.y = -10;
-  p.vx = -20;
-  p.vy = 650 + random() * 200;
-  p.alpha = 0.4 + random() * 0.4;
+  p.vx = -20 * depthFactor(depth, 0.6, 1);
+  p.vy = (650 + random() * 200) * depthFactor(depth, 0.55, 1);
+  p.alpha = (0.4 + random() * 0.4) * depthFactor(depth, 0.5, 1);
   p.size = 1;
-  p.length = 14 + random() * 10;
+  p.length = (14 + random() * 10) * depthFactor(depth, 0.5, 1);
   p.phase = 0;
+  p.depth = depth;
+  p.bounces = 0;
+  p.kind = 'primary';
 }
 
 function spawnStormRain(pool: ParticlePool, w: number): void {
@@ -187,19 +204,26 @@ function spawnStormRain(pool: ParticlePool, w: number): void {
   p.size = 1;
   p.length = 20 + random() * 14;
   p.phase = 0;
+  p.depth = random();
+  p.bounces = 0;
+  p.kind = 'primary';
 }
 
 function spawnSnow(pool: ParticlePool, w: number): void {
   const p = pool.spawn();
   if (!p) return;
+  const depth = random();
   p.x = random() * w;
   p.y = -10;
   p.vx = 0;
-  p.vy = 40 + random() * 50;
-  p.alpha = 0.6 + random() * 0.4;
-  p.size = 1.5 + random() * 3;
+  p.vy = (40 + random() * 50) * depthFactor(depth, 0.5, 1);
+  p.alpha = (0.6 + random() * 0.4) * depthFactor(depth, 0.5, 1);
+  p.size = (1.5 + random() * 3) * depthFactor(depth, 0.5, 1);
   p.length = 0;
   p.phase = random() * Math.PI * 2;
+  p.depth = depth;
+  p.bounces = 0;
+  p.kind = 'primary';
 }
 
 function spawnStar(pool: ParticlePool, w: number, h: number): void {
@@ -213,6 +237,9 @@ function spawnStar(pool: ParticlePool, w: number, h: number): void {
   p.size = 0.5 + random() * 1.5;
   p.length = 0;
   p.phase = random() * Math.PI * 2;
+  p.depth = 0.5;
+  p.bounces = 0;
+  p.kind = 'primary';
 }
 
 function spawnWind(pool: ParticlePool, w: number, h: number): void {
@@ -226,4 +253,7 @@ function spawnWind(pool: ParticlePool, w: number, h: number): void {
   p.size = 1;
   p.length = 30 + random() * 60;
   p.phase = 0;
+  p.depth = random();
+  p.bounces = 0;
+  p.kind = 'primary';
 }
