@@ -1,14 +1,21 @@
 import { WeatherScene } from '../core/index';
 import type { Condition, Intensity, TimeOfDay } from '../core/index';
+import { seedRng } from '../core/rng';
 
 const container = document.getElementById('weather-container')!;
 const controlsEl = document.getElementById('controls')!;
 
-const scene = new WeatherScene(container);
+const params = new URLSearchParams(location.search);
+const seedParam = params.get('seed');
+if (seedParam !== null) seedRng(Number(seedParam));
+const framesParam = params.get('frames');
+const manual = framesParam !== null;
 
-let activeCondition: Condition = 'clear';
-let activeTime: TimeOfDay = 'day';
-let activeIntensity: Intensity = 'medium';
+const scene = new WeatherScene(container, { manual });
+
+let activeCondition: Condition = (params.get('condition') as Condition) ?? 'clear';
+let activeTime: TimeOfDay = (params.get('time') as TimeOfDay) ?? 'day';
+let activeIntensity: Intensity = (params.get('intensity') as Intensity) ?? 'medium';
 
 const CONDITIONS: Condition[] = ['clear', 'cloudy', 'rain', 'snow', 'storm', 'fog', 'wind'];
 const CONDITION_LABELS: Record<Condition, string> = {
@@ -64,3 +71,4 @@ function buildControls() {
 
 buildControls();
 render();
+if (manual) scene.advance(Number(framesParam));
