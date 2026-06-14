@@ -1,7 +1,24 @@
 // tests/unit/atmosphere.test.ts
 import { describe, it, expect } from 'vitest';
-import { celestialPosition, fogBob, getCelestialOpacity } from '../../src/core/atmosphere';
+import { celestialPosition, createAtmosphereState, drawAtmosphere, fogBob, getCelestialOpacity } from '../../src/core/atmosphere';
 import { resolveConfig } from '../../src/core/types';
+
+function createRecordingContext(): CanvasRenderingContext2D & { fillRects: Array<[number, number, number, number]> } {
+  const gradient = { addColorStop: () => undefined };
+  const ctx = {
+    fillRects: [] as Array<[number, number, number, number]>,
+    save: () => undefined,
+    restore: () => undefined,
+    createLinearGradient: () => gradient,
+    createRadialGradient: () => gradient,
+    fillRect(x: number, y: number, width: number, height: number) {
+      this.fillRects.push([x, y, width, height]);
+    },
+    set globalAlpha(_: number) {},
+    set fillStyle(_: unknown) {},
+  };
+  return ctx as unknown as CanvasRenderingContext2D & { fillRects: Array<[number, number, number, number]> };
+}
 
 describe('fogBob', () => {
   it('returns baseY at time 0 with phase 0', () => {
@@ -78,5 +95,22 @@ describe('celestialPosition', () => {
     expect(sunsetEnd).toEqual({ x: 0.82, y: 0.68 });
     expect(moonsetStart).toEqual(sunsetStart);
     expect(moonsetEnd).toEqual(sunsetEnd);
+  });
+});
+
+describe('drawAtmosphere', () => {
+  it('does not clip the moon horizon glow at the middle of the viewport', () => {
+    const ctx = createRecordingContext();
+
+    drawAtmosphere(
+      ctx,
+      resolveConfig({ condition: 'clear', time: 'night', celestialEvent: 'moonrise' }),
+      createAtmosphereState(),
+      1,
+      800,
+      600,
+    );
+
+    expect(ctx.fillRects).not.toContainEqual([0, 300, 800, 300]);
   });
 });

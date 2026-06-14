@@ -253,7 +253,7 @@ function drawCelestialEventOverlay(
     horizon.addColorStop(0, 'rgba(150,175,220,0.35)');
     horizon.addColorStop(1, 'rgba(150,175,220,0)');
     ctx.fillStyle = horizon;
-    ctx.fillRect(0, height * 0.5, width, height * 0.5);
+    ctx.fillRect(0, 0, width, height);
   }
   ctx.restore();
 }
