@@ -2,15 +2,34 @@
   "name": "weather-animations",
   "version": "0.1.0",
   "private": true,
+  "exports": {
+    ".": {
+      "import": "./dist/core.esm.js",
+      "require": "./dist/core.umd.js"
+    },
+    "./react": {
+      "import": "./dist/react.esm.js",
+      "require": "./dist/react.umd.js"
+    },
+    "./icons/*": "./dist/icons/*",
+    "./react-icons": {
+      "import": "./dist/icons.esm.js",
+      "require": "./dist/icons.umd.js",
+      "types": "./dist/icons.d.ts"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build:lib": "LIB_ENTRY=core vite build --config vite.lib.config.ts && LIB_ENTRY=react vite build --config vite.lib.config.ts",
+    "build:icons": "vite build --config vite.icons.config.ts && node scripts/copy-icons.mjs",
+    "build": "npm run build:lib && npm run build:icons",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:visual": "playwright test"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
+    "@types/node": "^25.9.3",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.0",
@@ -18,6 +37,7 @@
     "react-dom": "^18.3.0",
     "typescript": "^5.4.0",
     "vite": "^5.2.0",
+    "vite-plugin-svgr": "^5.2.0",
     "vitest": "^1.6.0"
   },
   "peerDependencies": {

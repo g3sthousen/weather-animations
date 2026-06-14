@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <circle cx="17" cy="26" r="5" fill="var(--wi-primary,#90A4AE)"/>
+  <circle cx="24" cy="22" r="7" fill="var(--wi-primary,#90A4AE)"/>
+  <circle cx="31" cy="26" r="5" fill="var(--wi-primary,#90A4AE)"/>
+  <rect x="12" y="26" width="24" height="6" rx="3" fill="var(--wi-primary,#90A4AE)"/>
+</svg>
