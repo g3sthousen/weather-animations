@@ -10,6 +10,7 @@ Canvas-powered TypeScript weather backgrounds with smooth transitions, configura
 - Subtle/rich fidelity modes for states with extra visual detail.
 - Moon phase rendering and gated celestial events.
 - Core TypeScript API plus a small React wrapper.
+- Duotone SVG weather icons for every condition and intensity.
 - Deterministic test hooks for visual and unit testing.
 
 ## Quick Start
@@ -26,10 +27,10 @@ Run the demo:
 npm run dev
 ```
 
-Build the core and React library bundles:
+Build the core, React, and icon library bundles:
 
 ```bash
-npm run build:lib
+npm run build
 ```
 
 Run tests:
@@ -89,6 +90,40 @@ export function App() {
 }
 ```
 
+## Weather Icons
+
+The icon subpackage provides 24 duotone SVG icons: 8 weather conditions times 3 intensities.
+
+React components:
+
+```tsx
+import { RainHeavyIcon, getIconName } from 'weather-animations/react-icons';
+
+export function WeatherBadge() {
+  return (
+    <RainHeavyIcon
+      width={32}
+      height={32}
+      aria-label="Heavy rain"
+      style={{
+        '--wi-primary': '#5f7480',
+        '--wi-accent': '#38a7ff',
+      } as React.CSSProperties}
+    />
+  );
+}
+
+getIconName('rain', 'heavy'); // "rain-heavy"
+```
+
+Raw SVG assets are exported from `weather-animations/icons/*` after running `npm run build`:
+
+```ts
+const iconPath = require.resolve('weather-animations/icons/rain-heavy.svg');
+```
+
+Icon components use standard SVG props such as `width`, `height`, `className`, `style`, and ARIA attributes. Colors can be themed with `--wi-primary` and `--wi-accent`.
+
 ## Configuration
 
 | Option | Values | Default |
@@ -122,6 +157,7 @@ Keep provider-specific logic outside the renderer, then pass the normalized resu
 ```bash
 npm test
 ./node_modules/.bin/tsc --noEmit --skipLibCheck
+npm run build
 npm run test:visual
 ```
 
