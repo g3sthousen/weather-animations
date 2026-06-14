@@ -80,6 +80,32 @@ export function shouldStopBouncing(vy: number, bounces: number, maxBounces: numb
   return bounces >= maxBounces || Math.abs(vy) < minVel;
 }
 
+export interface HailBounceConfig {
+  enabled: boolean;
+  maxBounces: number;
+  damping: number;
+  minVelocity: number;
+  lateralJitter: number;
+}
+
+export function hailBounceConfig(intensity: ResolvedConfig['intensity'], rich: boolean): HailBounceConfig {
+  if (intensity === 'light') {
+    return { enabled: false, maxBounces: 0, damping: 0, minVelocity: 0, lateralJitter: 0 };
+  }
+
+  const base = intensity === 'medium'
+    ? { maxBounces: 1, damping: 0.32, minVelocity: 90, lateralJitter: 35 }
+    : { maxBounces: 2, damping: 0.42, minVelocity: 80, lateralJitter: 60 };
+
+  return {
+    enabled: true,
+    maxBounces: base.maxBounces + (rich ? 1 : 0),
+    damping: base.damping,
+    minVelocity: base.minVelocity,
+    lateralJitter: base.lateralJitter + (rich ? 30 : 0),
+  };
+}
+
 // --- Particle System ---
 
 const POOL_SIZE = 900;
@@ -170,10 +196,11 @@ export class ParticleSystem {
 
       // Hail bounce — reflect and damp on ground hit; deactivate after max bounces or low velocity.
       if (cfg.condition === 'hail' && p.kind === 'primary' && p.y > h) {
-        if (rich && !shouldStopBouncing(p.vy, p.bounces, 2, 80)) {
+        const bounce = hailBounceConfig(cfg.intensity, rich);
+        if (bounce.enabled && !shouldStopBouncing(p.vy, p.bounces, bounce.maxBounces, bounce.minVelocity)) {
           p.y = h;
-          p.vy = bounceVelocity(p.vy, 0.4);
-          p.vx += (random() - 0.5) * 60;
+          p.vy = bounceVelocity(p.vy, bounce.damping);
+          p.vx += (random() - 0.5) * bounce.lateralJitter;
           p.size *= 0.8;
           p.bounces += 1;
         } else {

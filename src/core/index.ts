@@ -3,6 +3,7 @@ import { resolveConfig } from './types';
 import { createEngineState, startTransition, tickEngine, renderEngine } from './engine';
 import type { EngineState } from './engine';
 
+export { isCelestialEventVisible } from './types';
 export type { WeatherConfig, Condition, Intensity, TimeOfDay, Fidelity, MoonPhase, CelestialEvent } from './types';
 
 export class WeatherScene {

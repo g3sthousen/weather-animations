@@ -1,4 +1,4 @@
-import type { CelestialEvent, MoonPhase, ResolvedConfig } from './types';
+import { isCelestialEventVisible, type CelestialEvent, type MoonPhase, type ResolvedConfig } from './types';
 import { random } from './rng';
 
 interface FogPlume {
@@ -51,7 +51,10 @@ const CLOUDY_CELESTIAL_OPACITY: Record<ResolvedConfig['intensity'], number> = {
 };
 
 export function getCelestialOpacity(config: ResolvedConfig): number {
-  if (config.celestialEvent !== 'none') return 1;
+  if (config.celestialEvent !== 'none') {
+    if (!isCelestialEventVisible(config.celestialEvent, config)) return 0;
+    return config.condition === 'cloudy' ? CLOUDY_CELESTIAL_OPACITY[config.intensity] : 1;
+  }
   if (config.condition === 'cloudy') {
     return CLOUDY_CELESTIAL_OPACITY[config.intensity];
   }
@@ -216,6 +219,7 @@ function drawCelestialEventOverlay(
   height: number,
 ): void {
   if (config.celestialEvent === 'none') return;
+  if (!isCelestialEventVisible(config.celestialEvent, config)) return;
   const pos = celestialPosition(config.celestialEvent, config.celestialProgress);
   const nearHorizon = celestialHorizonFactor(pos);
 

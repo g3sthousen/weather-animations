@@ -1,7 +1,7 @@
 // tests/unit/atmosphere.test.ts
 import { describe, it, expect } from 'vitest';
 import { celestialPosition, createAtmosphereState, drawAtmosphere, fogBob, getCelestialOpacity } from '../../src/core/atmosphere';
-import { resolveConfig } from '../../src/core/types';
+import { resolveConfig, type ResolvedConfig } from '../../src/core/types';
 
 function createRecordingContext(): CanvasRenderingContext2D & { fillRects: Array<[number, number, number, number]> } {
   const gradient = { addColorStop: () => undefined };
@@ -48,6 +48,20 @@ describe('getCelestialOpacity', () => {
   it('does not add celestial bodies to rainy or windy nights', () => {
     expect(getCelestialOpacity(resolveConfig({ condition: 'rain', time: 'day' }))).toBe(0);
     expect(getCelestialOpacity(resolveConfig({ condition: 'wind', time: 'night' }))).toBe(0);
+  });
+
+  it('does not force invalid active celestial events to full opacity', () => {
+    const invalidSunrise: ResolvedConfig = {
+      ...resolveConfig({ condition: 'rain', time: 'day' }),
+      celestialEvent: 'sunrise',
+    };
+    const wrongTimeMoonrise: ResolvedConfig = {
+      ...resolveConfig({ condition: 'clear', time: 'day' }),
+      celestialEvent: 'moonrise',
+    };
+
+    expect(getCelestialOpacity(invalidSunrise)).toBe(0);
+    expect(getCelestialOpacity(wrongTimeMoonrise)).toBe(0);
   });
 });
 

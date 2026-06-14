@@ -1,4 +1,4 @@
-import { WeatherScene } from '../core/index';
+import { isCelestialEventVisible, WeatherScene } from '../core/index';
 import type { CelestialEvent, Condition, Intensity, TimeOfDay, Fidelity, MoonPhase } from '../core/index';
 import { seedRng } from '../core/rng';
 
@@ -57,7 +57,22 @@ const CELESTIAL_EVENT_LABELS: Record<CelestialEvent, string> = {
 };
 const CELESTIAL_PROGRESS_STEPS = [0, 0.25, 0.5, 0.75, 1] as const;
 
+function isActiveCelestialEventVisible(event: CelestialEvent): boolean {
+  return isCelestialEventVisible(event, {
+    condition: activeCondition,
+    intensity: activeIntensity,
+    time: activeTime,
+  });
+}
+
+function normalizeActiveCelestialEvent() {
+  if (!isActiveCelestialEventVisible(activeCelestialEvent)) {
+    activeCelestialEvent = 'none';
+  }
+}
+
 function render() {
+  normalizeActiveCelestialEvent();
   scene.set({
     condition: activeCondition,
     time: activeTime,
@@ -80,6 +95,7 @@ function buildControls() {
     if (cond === activeCondition) btn.classList.add('active');
     btn.addEventListener('click', () => {
       activeCondition = cond;
+      normalizeActiveCelestialEvent();
       buildControls();
       render();
     });
@@ -92,7 +108,7 @@ function buildControls() {
     const btn = document.createElement('button');
     btn.textContent = t === 'day' ? 'Day' : 'Night';
     if (t === activeTime) btn.classList.add('active');
-    btn.addEventListener('click', () => { activeTime = t; buildControls(); render(); });
+    btn.addEventListener('click', () => { activeTime = t; normalizeActiveCelestialEvent(); buildControls(); render(); });
     timeRow.appendChild(btn);
   }
 
@@ -102,7 +118,7 @@ function buildControls() {
     const btn = document.createElement('button');
     btn.textContent = i.charAt(0).toUpperCase() + i.slice(1);
     if (i === activeIntensity) btn.classList.add('active');
-    btn.addEventListener('click', () => { activeIntensity = i; buildControls(); render(); });
+    btn.addEventListener('click', () => { activeIntensity = i; normalizeActiveCelestialEvent(); buildControls(); render(); });
     intRow.appendChild(btn);
   }
 
@@ -130,9 +146,16 @@ function buildControls() {
   eventRow.className = 'btn-row';
   for (const event of CELESTIAL_EVENTS) {
     const btn = document.createElement('button');
+    const enabled = isActiveCelestialEventVisible(event);
     btn.textContent = CELESTIAL_EVENT_LABELS[event];
+    btn.disabled = !enabled;
     if (event === activeCelestialEvent) btn.classList.add('active');
-    btn.addEventListener('click', () => { activeCelestialEvent = event; buildControls(); render(); });
+    btn.addEventListener('click', () => {
+      if (!enabled) return;
+      activeCelestialEvent = event;
+      buildControls();
+      render();
+    });
     eventRow.appendChild(btn);
   }
 
@@ -155,6 +178,7 @@ function buildControls() {
   controlsEl.appendChild(progressRow);
 }
 
+normalizeActiveCelestialEvent();
 buildControls();
 render();
 if (manual) scene.advance(Number(framesParam));

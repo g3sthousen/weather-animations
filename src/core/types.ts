@@ -93,6 +93,22 @@ export const VALID_MOON_PHASES: MoonPhase[] = [
   'waning-crescent',
 ];
 
+export function isCelestialEventVisible(
+  event: CelestialEvent,
+  config: Pick<ResolvedConfig, 'condition' | 'intensity' | 'time'>,
+): boolean {
+  if (event === 'none') return true;
+  const skyAllowsCelestialEvent = config.condition === 'clear'
+    || config.condition === 'wind'
+    || (config.condition === 'cloudy' && config.intensity !== 'heavy');
+  if (!skyAllowsCelestialEvent) return false;
+
+  if (event === 'sunrise' || event === 'sunset') {
+    return config.time === 'day';
+  }
+  return config.time === 'night';
+}
+
 export function resolveConfig(config: WeatherConfig): ResolvedConfig {
   const condition: Condition = VALID_CONDITIONS.includes(config.condition as Condition)
     ? config.condition
@@ -100,15 +116,20 @@ export function resolveConfig(config: WeatherConfig): ResolvedConfig {
   const moonPhase: MoonPhase = VALID_MOON_PHASES.includes(config.moonPhase as MoonPhase)
     ? config.moonPhase as MoonPhase
     : 'full';
-  const celestialEvent: CelestialEvent = VALID_CELESTIAL_EVENTS.includes(config.celestialEvent as CelestialEvent)
+  const intensity = config.intensity ?? 'medium';
+  const time = config.time ?? 'day';
+  const requestedCelestialEvent: CelestialEvent = VALID_CELESTIAL_EVENTS.includes(config.celestialEvent as CelestialEvent)
     ? config.celestialEvent as CelestialEvent
+    : 'none';
+  const celestialEvent = isCelestialEventVisible(requestedCelestialEvent, { condition, intensity, time })
+    ? requestedCelestialEvent
     : 'none';
   const rawCelestialProgress = config.celestialProgress ?? 0.5;
   const celestialProgress = Math.min(1, Math.max(0, Number.isFinite(rawCelestialProgress) ? rawCelestialProgress : 0.5));
   return {
     condition,
-    intensity: config.intensity ?? 'medium',
-    time: config.time ?? 'day',
+    intensity,
+    time,
     transitionMs: config.transitionMs ?? 1200,
     fidelity: config.fidelity ?? 'subtle',
     moonPhase,

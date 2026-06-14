@@ -73,7 +73,7 @@ const cn = {
 function R(n) {
   return cn[`${n.condition}:${n.time}`];
 }
-function N(n, t) {
+function B(n, t) {
   return {
     r: Math.round(C(n.r, 255, t)),
     g: Math.round(C(n.g, 255, t)),
@@ -81,7 +81,7 @@ function N(n, t) {
   };
 }
 function hn(n, t, e = 0) {
-  const o = R(t), i = e > 0 ? N(o.top, e * 0.4) : o.top, r = e > 0 ? N(o.bottom, e * 0.4) : o.bottom;
+  const o = R(t), i = e > 0 ? B(o.top, e * 0.4) : o.top, r = e > 0 ? B(o.bottom, e * 0.4) : o.bottom;
   n.style.background = `linear-gradient(to bottom, ${w(i)}, ${w(r)})`;
 }
 function un(n, t, e, o) {
@@ -92,7 +92,7 @@ let dn = Math.random;
 function c() {
   return dn();
 }
-const B = [6e-3, 0.022, 0.06], fn = { 0: 4, 1: 5, 2: 6 }, pn = { light: 0.55, medium: 1, heavy: 1.5 }, bn = { light: 0.75, medium: 1, heavy: 1.2 };
+const N = [6e-3, 0.022, 0.06], fn = { 0: 4, 1: 5, 2: 6 }, pn = { light: 0.55, medium: 1, heavy: 1.5 }, bn = { light: 0.75, medium: 1, heavy: 1.2 };
 function k(n, t) {
   return n.condition === "storm" ? n.time === "night" ? `rgba(26,26,42,${t})` : `rgba(42,42,58,${t})` : n.condition === "hail" ? n.time === "night" ? `rgba(40,52,50,${t})` : `rgba(70,86,82,${t})` : n.condition === "rain" ? n.time === "night" ? `rgba(58,74,90,${t})` : `rgba(106,122,138,${t})` : n.time === "night" ? `rgba(58,74,106,${t})` : `rgba(208,216,224,${t})`;
 }
@@ -118,7 +118,7 @@ function G(n, t, e) {
   }
   return h;
 }
-function K(n, t, e) {
+function U(n, t, e) {
   if (!mn(n.condition)) return [];
   const o = [], i = pn[n.intensity];
   if (n.condition === "storm") {
@@ -133,7 +133,7 @@ function K(n, t, e) {
           width: l,
           height: p,
           alpha: W(n, a),
-          speed: B[a] * t,
+          speed: N[a] * t,
           layer: a,
           lobes: G(l, p, !1)
         });
@@ -152,7 +152,7 @@ function K(n, t, e) {
         width: p,
         height: m,
         alpha: W(n, s),
-        speed: B[s] * (d ? 3 : 1) * t,
+        speed: N[s] * (d ? 3 : 1) * t,
         layer: s,
         lobes: d ? [] : G(p, m, c() < 0.35)
       });
@@ -194,16 +194,16 @@ function I(n, t, e, o) {
 function yn(n, t, e, o, i) {
   return t + e * Math.sin(n * o + i);
 }
-const Sn = { x: 0.75, y: 0.18 }, vn = 0.5, O = 0.68, Pn = 0.32, Z = 0.5, q = { y: O - Z };
+const Sn = { x: 0.75, y: 0.18 }, vn = 0.5, O = 0.68, Pn = 0.32, K = 0.5, q = { y: O - K };
 function $(n, t) {
   if (n === "none") return Sn;
   const e = Math.min(1, Math.max(0, t)), i = n === "sunrise" || n === "moonrise" ? e * 0.5 : 0.5 + e * 0.5, r = Math.PI - Math.PI * i;
   return {
     x: Number((vn + Math.cos(r) * Pn).toFixed(4)),
-    y: Number((O - Math.sin(r) * Z).toFixed(4))
+    y: Number((O - Math.sin(r) * K).toFixed(4))
   };
 }
-function J(n) {
+function Z(n) {
   return Math.max(0, Math.min(1, (n.y - q.y) / (O - q.y)));
 }
 const Cn = {
@@ -246,9 +246,9 @@ function H(n, t, e) {
 function E(n, t, e, o, i, r) {
   n.save(), n.globalAlpha = o, An(n, t, o, i, r), t.condition === "fog" && On(n, t, e, i, r);
   const s = Math.max(e.lightningFlash, e.preflicker * 0.4);
-  if (s > 0 && (n.globalAlpha = o * s * 0.45, n.fillStyle = "rgba(200,220,255,1)", n.fillRect(0, 0, i, r), e.boltPoints && e.lightningFlash > 0 && (X(n, e.boltPoints, o * e.lightningFlash, i, r), e.boltBranches)))
+  if (s > 0 && (n.globalAlpha = o * s * 0.45, n.fillStyle = "rgba(200,220,255,1)", n.fillRect(0, 0, i, r), e.boltPoints && e.lightningFlash > 0 && (V(n, e.boltPoints, o * e.lightningFlash, i, r), e.boltBranches)))
     for (const a of e.boltBranches)
-      X(n, a, o * e.lightningFlash * 0.7, i, r);
+      V(n, a, o * e.lightningFlash * 0.7, i, r);
   if (t.fidelity === "rich" && e.lightningFlash > 0 && t.condition === "storm") {
     n.save(), n.globalCompositeOperation = "lighter", n.globalAlpha = o * e.lightningFlash * 0.5;
     const a = n.createLinearGradient(0, 0, 0, r * 0.5);
@@ -268,7 +268,7 @@ function wn(n) {
 }
 function An(n, t, e, o, i) {
   if (t.celestialEvent === "none") return;
-  const r = $(t.celestialEvent, t.celestialProgress), s = J(r);
+  const r = $(t.celestialEvent, t.celestialProgress), s = Z(r);
   if (n.save(), _(t.celestialEvent)) {
     n.globalAlpha = e * (0.35 + s * 0.25);
     const a = n.createLinearGradient(0, 0, 0, i);
@@ -303,7 +303,7 @@ function In(n) {
   }
   return t;
 }
-function X(n, t, e, o, i) {
+function V(n, t, e, o, i) {
   n.save(), n.globalAlpha = e, n.lineCap = "round", n.lineJoin = "round";
   const r = () => {
     n.beginPath(), n.moveTo(t[0][0] * o, t[0][1] * i);
@@ -313,7 +313,7 @@ function X(n, t, e, o, i) {
   r(), n.strokeStyle = "rgba(140,180,255,0.5)", n.lineWidth = 10, n.shadowColor = "#90b8ff", n.shadowBlur = 30, n.stroke(), r(), n.strokeStyle = "rgba(200,220,255,0.85)", n.lineWidth = 3.5, n.shadowBlur = 12, n.stroke(), r(), n.strokeStyle = "#ffffff", n.lineWidth = 1.5, n.shadowBlur = 0, n.stroke(), n.restore();
 }
 function En(n, t, e, o, i) {
-  const r = $(t.celestialEvent, t.celestialProgress), s = o * r.x, a = i * r.y, h = _(t.celestialEvent) ? J(r) : 0, d = Math.min(o, i) * (0.08 + h * 0.02), l = n.createRadialGradient(s, a, d * 0.4, s, a, d * (4 + h * 2));
+  const r = $(t.celestialEvent, t.celestialProgress), s = o * r.x, a = i * r.y, h = _(t.celestialEvent) ? Z(r) : 0, d = Math.min(o, i) * (0.08 + h * 0.02), l = n.createRadialGradient(s, a, d * 0.4, s, a, d * (4 + h * 2));
   l.addColorStop(0, `rgba(255,220,150,${0.45 + h * 0.2})`), l.addColorStop(0.5, `rgba(255,170,110,${0.12 + h * 0.12})`), l.addColorStop(1, "rgba(255,240,180,0)");
   const p = d * (4 + h * 2);
   if (n.fillStyle = l, n.fillRect(s - p, a - p, p * 2, p * 2), t.fidelity === "rich") {
@@ -429,18 +429,18 @@ class $n {
   }
 }
 const _n = { light: 0.3, medium: 0.65, heavy: 1 };
-function D(n) {
+function X(n) {
   return _n[n.intensity];
 }
 const Fn = { subtle: 1, rich: 1.8 };
-function Nn(n) {
+function Bn(n) {
   return Fn[n.fidelity];
 }
 function y(n, t, e) {
   return t + (e - t) * n;
 }
 const z = 0.15;
-function Bn(n) {
+function Nn(n) {
   return n !== "light";
 }
 function Wn(n, t, e) {
@@ -458,6 +458,18 @@ function qn(n, t) {
 function Hn(n, t, e, o) {
   return t >= e || Math.abs(n) < o;
 }
+function Vn(n, t) {
+  if (n === "light")
+    return { enabled: !1, maxBounces: 0, damping: 0, minVelocity: 0, lateralJitter: 0 };
+  const e = n === "medium" ? { maxBounces: 1, damping: 0.32, minVelocity: 90, lateralJitter: 35 } : { maxBounces: 2, damping: 0.42, minVelocity: 80, lateralJitter: 60 };
+  return {
+    enabled: !0,
+    maxBounces: e.maxBounces + (t ? 1 : 0),
+    damping: e.damping,
+    minVelocity: e.minVelocity,
+    lateralJitter: e.lateralJitter + (t ? 30 : 0)
+  };
+}
 const Xn = 900;
 class Q {
   constructor() {
@@ -471,14 +483,14 @@ class Q {
   }
   init(t, e, o) {
     if (this.config = t, this.width = e, this.height = o, this.pool.reset(), this.spawnAccum = 0, this.time = 0, t.condition === "clear" && t.time === "night") {
-      const i = Math.floor(120 * D(t));
-      for (let r = 0; r < i; r++) Qn(this.pool, e, o);
+      const i = Math.floor(120 * X(t));
+      for (let r = 0; r < i; r++) xn(this.pool, e, o);
     }
   }
   update(t) {
     if (!this.config) return;
     this.time += t;
-    const e = this.config, o = D(e) * Nn(e), i = this.width, r = this.height, s = e.fidelity === "rich", a = Yn(this.time, -20, 12, 0.4);
+    const e = this.config, o = X(e) * Bn(e), i = this.width, r = this.height, s = e.fidelity === "rich", a = Yn(this.time, -20, 12, 0.4);
     for (const l of this.pool.particles)
       if (l.active) {
         if (l.x += l.vx * t, l.y += l.vy * t, l.phase += t, l.kind === "splash") {
@@ -489,13 +501,14 @@ class Q {
           l.vy += 500 * t, l.alpha -= t * 4, (l.alpha <= 0 || l.y > r + 10) && (l.active = !1);
           continue;
         }
-        if (l.kind === "leaf" && (l.phase += t * 6), e.condition === "snow" && (l.vx = Math.sin(l.phase * 0.8) * 18), e.condition === "rain" && (l.vx = a * y(l.depth, 0.6, 1)), e.condition === "clear" && e.time === "night" && (l.alpha = 0.5 + 0.5 * Math.sin(l.phase * 2.5 + l.size)), (e.condition === "rain" || e.condition === "storm") && l.kind === "primary" && l.y > r && Bn(e.intensity)) {
+        if (l.kind === "leaf" && (l.phase += t * 6), e.condition === "snow" && (l.vx = Math.sin(l.phase * 0.8) * 18), e.condition === "rain" && (l.vx = a * y(l.depth, 0.6, 1)), e.condition === "clear" && e.time === "night" && (l.alpha = 0.5 + 0.5 * Math.sin(l.phase * 2.5 + l.size)), (e.condition === "rain" || e.condition === "storm") && l.kind === "primary" && l.y > r && Nn(e.intensity)) {
           const p = s ? 0.3 : 0.6;
-          l.depth > p && (Vn(this.pool, l.x, r, s, e.intensity), s && Kn(this.pool, l.x, r, 2 + Math.floor(c() * 3))), l.active = !1;
+          l.depth > p && (Un(this.pool, l.x, r, s, e.intensity), s && Kn(this.pool, l.x, r, 2 + Math.floor(c() * 3))), l.active = !1;
           continue;
         }
         if (e.condition === "hail" && l.bounces > 0 && (l.vy += 980 * t), e.condition === "hail" && l.kind === "primary" && l.y > r) {
-          s && !Hn(l.vy, l.bounces, 2, 80) ? (l.y = r, l.vy = qn(l.vy, 0.4), l.vx += (c() - 0.5) * 60, l.size *= 0.8, l.bounces += 1) : l.active = !1;
+          const p = Vn(e.intensity, s);
+          p.enabled && !Hn(l.vy, l.bounces, p.maxBounces, p.minVelocity) ? (l.y = r, l.vy = qn(l.vy, p.damping), l.vx += (c() - 0.5) * p.lateralJitter, l.size *= 0.8, l.bounces += 1) : l.active = !1;
           continue;
         }
         (l.y > r + 20 || l.x < -20 || l.x > i + 20 || l.y < -20) && (l.active = !1);
@@ -509,7 +522,7 @@ class Q {
     }, h = e.condition === "storm" ? "storm-rain" : e.condition, d = u[h];
     if (d)
       for (this.spawnAccum += d * t; this.spawnAccum >= 1; )
-        this.spawnAccum -= 1, e.condition === "rain" ? Zn(this.pool, i) : e.condition === "storm" ? Jn(this.pool, i) : e.condition === "snow" ? jn(this.pool, i) : e.condition === "wind" ? xn(this.pool, i, r, s) : e.condition === "hail" && nt(this.pool, i);
+        this.spawnAccum -= 1, e.condition === "rain" ? Zn(this.pool, i) : e.condition === "storm" ? jn(this.pool, i) : e.condition === "snow" ? Qn(this.pool, i) : e.condition === "wind" ? nt(this.pool, i, r, s) : e.condition === "hail" && tt(this.pool, i);
   }
   draw(t, e, o) {
     const i = o ?? this.config;
@@ -552,11 +565,11 @@ function Dn(n, t, e, o) {
     }
   } else e.condition === "wind" ? (n.strokeStyle = `rgba(180,210,240,${t.alpha})`, n.lineWidth = 1, n.beginPath(), n.moveTo(t.x, t.y), n.quadraticCurveTo(t.x + t.length * 0.5, t.y - t.length * 0.12, t.x + t.length, t.y), n.stroke()) : e.condition === "hail" && (n.fillStyle = `rgba(225,235,245,${t.alpha})`, n.beginPath(), n.arc(t.x, t.y, t.size, 0, Math.PI * 2), n.fill(), n.globalAlpha = o * t.alpha * 0.5, n.strokeStyle = "rgba(255,255,255,0.9)", n.lineWidth = 0.75, n.beginPath(), n.arc(t.x - t.size * 0.25, t.y - t.size * 0.25, t.size * 0.6, 0, Math.PI * 2), n.stroke());
 }
-const Un = { light: 1, medium: 1.4, heavy: 2 };
-function Vn(n, t, e, o, i) {
+const Jn = { light: 1, medium: 1.4, heavy: 2 };
+function Un(n, t, e, o, i) {
   const r = n.spawn();
   if (!r) return;
-  const s = Un[i];
+  const s = Jn[i];
   r.x = t, r.y = e - 1, r.vx = 0, r.vy = 0, r.alpha = 1, r.size = (o ? 8 + c() * 5 : 5 + c() * 3) * s, r.length = 0, r.phase = 0, r.depth = 1, r.bounces = 0, r.kind = "splash";
 }
 function Kn(n, t, e, o) {
@@ -572,55 +585,55 @@ function Zn(n, t) {
   const o = c();
   e.x = c() * (t + 100) - 50, e.y = -10, e.vx = -20 * y(o, 0.6, 1), e.vy = (650 + c() * 200) * y(o, 0.55, 1), e.alpha = (0.4 + c() * 0.4) * y(o, 0.5, 1), e.size = 1, e.length = (14 + c() * 10) * y(o, 0.5, 1), e.phase = 0, e.depth = o, e.bounces = 0, e.kind = "primary";
 }
-function Jn(n, t) {
+function jn(n, t) {
   const e = n.spawn();
   e && (e.x = c() * (t + 100) - 50, e.y = -10, e.vx = -35, e.vy = 900 + c() * 300, e.alpha = 0.5 + c() * 0.4, e.size = 1, e.length = 20 + c() * 14, e.phase = 0, e.depth = c(), e.bounces = 0, e.kind = "primary");
 }
-function jn(n, t) {
+function Qn(n, t) {
   const e = n.spawn();
   if (!e) return;
   const o = c();
   e.x = c() * t, e.y = -10, e.vx = 0, e.vy = (40 + c() * 50) * y(o, 0.5, 1), e.alpha = (0.6 + c() * 0.4) * y(o, 0.5, 1), e.size = (1.5 + c() * 3) * y(o, 0.5, 1), e.length = 0, e.phase = c() * Math.PI * 2, e.depth = o, e.bounces = 0, e.kind = "primary";
 }
-function Qn(n, t, e) {
+function xn(n, t, e) {
   const o = n.spawn();
   if (!o) return;
   const i = c() < 0.12;
   o.x = c() * t, o.y = c() * e * 0.7, o.vx = 0, o.vy = 0, o.alpha = 0.3 + c() * 0.7, o.size = i ? 1.6 + c() * 1.2 : 0.5 + c() * 1.5, o.length = i ? 1 : 0, o.phase = c() * Math.PI * 2, o.depth = 0.5, o.bounces = 0, o.kind = "primary";
 }
-function xn(n, t, e, o) {
+function nt(n, t, e, o) {
   const i = n.spawn();
   if (!i) return;
   const r = c(), s = o && c() < 0.12;
   i.x = -20, i.y = c() * e, i.vx = (300 + c() * 200) * y(r, 0.55, 1), i.vy = s ? (c() - 0.5) * 40 : 0, i.alpha = (0.2 + c() * 0.5) * y(r, 0.5, 1), i.size = s ? 3 + c() * 3 : 1, i.length = (30 + c() * 60) * y(r, 0.5, 1), i.phase = c() * Math.PI * 2, i.depth = r, i.bounces = 0, i.kind = s ? "leaf" : "primary";
 }
-function nt(n, t) {
+function tt(n, t) {
   const e = n.spawn();
   if (!e) return;
   const o = c();
   e.x = c() * (t + 60) - 30, e.y = -10, e.vx = -8 * y(o, 0.5, 1), e.vy = (700 + c() * 250) * y(o, 0.55, 1), e.alpha = (0.7 + c() * 0.3) * y(o, 0.5, 1), e.size = (2 + c() * 2.5) * y(o, 0.5, 1), e.length = 0, e.phase = 0, e.depth = o, e.bounces = 0, e.kind = "primary";
 }
-function tt(n, t) {
+function et(n, t) {
   return { from: n, to: t, elapsed: 0 };
 }
-function et(n, t) {
+function ot(n, t) {
   return {
     ...n,
     elapsed: Math.min(n.elapsed + t * 1e3, n.to.transitionMs)
   };
 }
-function ot(n) {
+function it(n) {
   const t = L(n.elapsed / n.to.transitionMs, 0, 1);
   return ln(t);
 }
-function it(n) {
+function rt(n) {
   return n.elapsed >= n.to.transitionMs;
 }
-function rt(n, t, e) {
+function st(n, t, e) {
   const o = new Q();
   return o.init(n, t, e), {
     current: n,
-    currentClouds: K(n, t, e),
+    currentClouds: U(n, t, e),
     currentPS: o,
     currentAtmo: j(),
     transition: null,
@@ -629,21 +642,21 @@ function rt(n, t, e) {
     transAtmo: null
   };
 }
-function st(n, t, e, o) {
+function at(n, t, e, o) {
   const i = n.current, r = new Q();
   return r.init(t, e, o), {
     ...n,
-    transition: tt(i, t),
-    transClouds: K(t, e, o),
+    transition: et(i, t),
+    transClouds: U(t, e, o),
     transPS: r,
     transAtmo: j()
   };
 }
-function U(n, t, e, o) {
+function D(n, t, e, o) {
   let i = { ...n };
   if (H(i.currentAtmo, i.current, t), i.currentPS.update(t), Y(i.currentClouds, t, e), i.transition) {
-    const r = et(i.transition, t);
-    i.transition = r, i.transAtmo && H(i.transAtmo, r.to, t), i.transPS && i.transPS.update(t), i.transClouds && Y(i.transClouds, t, e), it(r) && (i = {
+    const r = ot(i.transition, t);
+    i.transition = r, i.transAtmo && H(i.transAtmo, r.to, t), i.transPS && i.transPS.update(t), i.transClouds && Y(i.transClouds, t, e), rt(r) && (i = {
       current: r.to,
       currentClouds: i.transClouds,
       currentPS: i.transPS,
@@ -656,14 +669,14 @@ function U(n, t, e, o) {
   }
   return i;
 }
-function V(n, t, e, o, i) {
+function J(n, t, e, o, i) {
   if (e.clearRect(0, 0, o, i), n.transition) {
-    const r = ot(n.transition), s = n.transition.from, a = n.transition.to, u = 1 - r;
+    const r = it(n.transition), s = n.transition.from, a = n.transition.to, u = 1 - r;
     un(t, s, a, r), T(e, s, n.currentAtmo, u, o, i), n.transAtmo && T(e, a, n.transAtmo, r, o, i), I(e, n.currentClouds, s, u), E(e, s, n.currentAtmo, u, o, i), n.currentPS.draw(e, u, s), n.transClouds && I(e, n.transClouds, a, r), n.transAtmo && E(e, a, n.transAtmo, r, o, i), n.transPS && n.transPS.draw(e, r, a);
   } else
     hn(t, n.current, n.currentAtmo.lightningFlash), T(e, n.current, n.currentAtmo, 1, o, i), I(e, n.currentClouds, n.current, 1), E(e, n.current, n.currentAtmo, 1, o, i), n.currentPS.draw(e, 1, n.current);
 }
-class lt {
+class ct {
   constructor(t, e = {}) {
     b(this, "destroyed", !1);
     b(this, "skyEl");
@@ -684,15 +697,15 @@ class lt {
   set(t) {
     if (this.destroyed) return;
     const e = an(t), { offsetWidth: o, offsetHeight: i } = this.container;
-    this.engineState ? this.engineState = st(this.engineState, e, o, i) : (this.engineState = rt(e, o, i), this.manual || this.startLoop());
+    this.engineState ? this.engineState = at(this.engineState, e, o, i) : (this.engineState = st(e, o, i), this.manual || this.startLoop());
   }
   /** Deterministically tick + render N frames at a fixed delta (test hook). */
   advance(t, e = 1 / 60) {
     if (this.destroyed || !this.engineState || !this.ctx) return;
     const o = this.canvas.width, i = this.canvas.height;
     for (let r = 0; r < t; r++)
-      this.engineState = U(this.engineState, e, o);
-    V(this.engineState, this.skyEl, this.ctx, o, i);
+      this.engineState = D(this.engineState, e, o);
+    J(this.engineState, this.skyEl, this.ctx, o, i);
   }
   destroy() {
     this.destroyed || (this.destroyed = !0, this.stopLoop(), this.resizeObserver.disconnect(), this.skyEl.remove(), this.canvas.remove(), this.engineState = null);
@@ -703,7 +716,7 @@ class lt {
       const o = this.lastTimestamp != null ? Math.min((e - this.lastTimestamp) / 1e3, 0.1) : 0;
       if (this.lastTimestamp = e, this.engineState && this.ctx) {
         const i = this.canvas.width, r = this.canvas.height;
-        this.engineState = U(this.engineState, o, i), V(this.engineState, this.skyEl, this.ctx, i, r);
+        this.engineState = D(this.engineState, o, i), J(this.engineState, this.skyEl, this.ctx, i, r);
       }
       this.rafId = requestAnimationFrame(t);
     };
@@ -714,5 +727,5 @@ class lt {
   }
 }
 export {
-  lt as WeatherScene
+  ct as WeatherScene
 };

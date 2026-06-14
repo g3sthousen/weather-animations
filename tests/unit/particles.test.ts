@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ParticlePool, getFidelityScale, depthFactor, rainSplashes, splashRadius, splashAlpha, gustOffset, bounceVelocity, shouldStopBouncing } from '../../src/core/particles';
+import { ParticlePool, getFidelityScale, depthFactor, rainSplashes, splashRadius, splashAlpha, gustOffset, bounceVelocity, shouldStopBouncing, hailBounceConfig } from '../../src/core/particles';
 import { resolveConfig } from '../../src/core/types';
 
 describe('ParticlePool', () => {
@@ -104,6 +104,38 @@ describe('gustOffset', () => {
 });
 
 describe('hail bounce', () => {
+  it('disables bounces at light intensity even in rich fidelity', () => {
+    expect(hailBounceConfig('light', false).enabled).toBe(false);
+    expect(hailBounceConfig('light', true).enabled).toBe(false);
+  });
+
+  it('enables a smaller bounce at medium intensity than heavy intensity', () => {
+    const medium = hailBounceConfig('medium', false);
+    const heavy = hailBounceConfig('heavy', false);
+
+    expect(medium.enabled).toBe(true);
+    expect(heavy.enabled).toBe(true);
+    expect(medium.maxBounces).toBe(1);
+    expect(medium.damping).toBeCloseTo(0.32);
+    expect(medium.minVelocity).toBe(90);
+    expect(heavy.maxBounces).toBe(2);
+    expect(heavy.damping).toBeCloseTo(0.42);
+    expect(heavy.minVelocity).toBe(80);
+  });
+
+  it('rich fidelity strengthens medium and heavy hail bounces without enabling light', () => {
+    const medium = hailBounceConfig('medium', false);
+    const mediumRich = hailBounceConfig('medium', true);
+    const heavy = hailBounceConfig('heavy', false);
+    const heavyRich = hailBounceConfig('heavy', true);
+
+    expect(hailBounceConfig('light', true).enabled).toBe(false);
+    expect(mediumRich.maxBounces).toBeGreaterThan(medium.maxBounces);
+    expect(heavyRich.maxBounces).toBeGreaterThan(heavy.maxBounces);
+    expect(mediumRich.lateralJitter).toBeGreaterThan(medium.lateralJitter);
+    expect(heavyRich.lateralJitter).toBeGreaterThan(heavy.lateralJitter);
+  });
+
   it('reflects and damps vertical velocity', () => {
     expect(bounceVelocity(900, 0.4)).toBeCloseTo(-360);
   });

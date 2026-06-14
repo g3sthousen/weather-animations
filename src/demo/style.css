@@ -47,6 +47,11 @@ button {
 
 button:hover { background: rgba(255,255,255,0.35); }
 button.active { background: rgba(255,255,255,0.5); color: #111; text-shadow: none; }
+button:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+button:disabled:hover { background: rgba(255,255,255,0.2); }
 
 .moon-row {
   gap: 6px;

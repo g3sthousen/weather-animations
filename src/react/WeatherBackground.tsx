@@ -12,6 +12,10 @@ export function WeatherBackground({
   intensity,
   time,
   transitionMs,
+  fidelity,
+  moonPhase,
+  celestialEvent,
+  celestialProgress,
   className,
   style,
 }: WeatherBackgroundProps) {
@@ -25,8 +29,17 @@ export function WeatherBackground({
   }, []);
 
   useEffect(() => {
-    sceneRef.current?.set({ condition, intensity, time, transitionMs });
-  }, [condition, intensity, time, transitionMs]);
+    sceneRef.current?.set({
+      condition,
+      intensity,
+      time,
+      transitionMs,
+      fidelity,
+      moonPhase,
+      celestialEvent,
+      celestialProgress,
+    });
+  }, [condition, intensity, time, transitionMs, fidelity, moonPhase, celestialEvent, celestialProgress]);
 
   return <div ref={containerRef} className={className} style={style} />;
 }

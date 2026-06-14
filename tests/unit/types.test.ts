@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveConfig, VALID_CELESTIAL_EVENTS, VALID_CONDITIONS, VALID_MOON_PHASES } from '../../src/core/types';
+import { isCelestialEventVisible, resolveConfig, VALID_CELESTIAL_EVENTS, VALID_CONDITIONS, VALID_MOON_PHASES } from '../../src/core/types';
 
 describe('hail condition', () => {
   it('is a valid condition', () => {
@@ -54,11 +54,35 @@ describe('resolveConfig celestial events', () => {
     expect(cfg.celestialProgress).toBe(0.5);
   });
 
-  it('passes through valid celestial events and progress', () => {
-    const cfg = resolveConfig({ condition: 'clear', celestialEvent: 'sunrise', celestialProgress: 0.25 });
+  it('passes through valid sun events and progress during clear days', () => {
+    const sunrise = resolveConfig({ condition: 'clear', time: 'day', celestialEvent: 'sunrise', celestialProgress: 0.25 });
+    const sunset = resolveConfig({ condition: 'clear', time: 'day', celestialEvent: 'sunset' });
 
-    expect(cfg.celestialEvent).toBe('sunrise');
-    expect(cfg.celestialProgress).toBe(0.25);
+    expect(sunrise.celestialEvent).toBe('sunrise');
+    expect(sunrise.celestialProgress).toBe(0.25);
+    expect(sunset.celestialEvent).toBe('sunset');
+  });
+
+  it('passes through valid moon events during clear nights', () => {
+    expect(resolveConfig({ condition: 'clear', time: 'night', celestialEvent: 'moonrise' }).celestialEvent).toBe('moonrise');
+    expect(resolveConfig({ condition: 'clear', time: 'night', celestialEvent: 'moonset' }).celestialEvent).toBe('moonset');
+  });
+
+  it('allows matching celestial events in light and medium cloudy conditions', () => {
+    expect(resolveConfig({ condition: 'cloudy', intensity: 'light', time: 'day', celestialEvent: 'sunrise' }).celestialEvent).toBe('sunrise');
+    expect(resolveConfig({ condition: 'cloudy', intensity: 'medium', time: 'night', celestialEvent: 'moonset' }).celestialEvent).toBe('moonset');
+  });
+
+  it('allows matching celestial events in windy conditions', () => {
+    expect(resolveConfig({ condition: 'wind', time: 'day', celestialEvent: 'sunset' }).celestialEvent).toBe('sunset');
+    expect(resolveConfig({ condition: 'wind', time: 'night', celestialEvent: 'moonrise' }).celestialEvent).toBe('moonrise');
+  });
+
+  it('falls back to none when celestial events do not match visible conditions', () => {
+    expect(resolveConfig({ condition: 'rain', time: 'day', celestialEvent: 'sunrise' }).celestialEvent).toBe('none');
+    expect(resolveConfig({ condition: 'cloudy', intensity: 'heavy', time: 'day', celestialEvent: 'sunset' }).celestialEvent).toBe('none');
+    expect(resolveConfig({ condition: 'clear', time: 'night', celestialEvent: 'sunrise' }).celestialEvent).toBe('none');
+    expect(resolveConfig({ condition: 'clear', time: 'day', celestialEvent: 'moonrise' }).celestialEvent).toBe('none');
   });
 
   it('falls back to none for invalid celestial events', () => {
@@ -72,5 +96,30 @@ describe('resolveConfig celestial events', () => {
 
   it('exports the canonical celestial events', () => {
     expect(VALID_CELESTIAL_EVENTS).toEqual(['none', 'sunrise', 'sunset', 'moonrise', 'moonset']);
+  });
+});
+
+describe('isCelestialEventVisible', () => {
+  it('allows none regardless of weather state', () => {
+    expect(isCelestialEventVisible('none', { condition: 'storm', intensity: 'heavy', time: 'night' })).toBe(true);
+  });
+
+  it('allows sun events only in clear, wind, or light/medium cloudy days', () => {
+    expect(isCelestialEventVisible('sunrise', { condition: 'clear', intensity: 'heavy', time: 'day' })).toBe(true);
+    expect(isCelestialEventVisible('sunrise', { condition: 'wind', intensity: 'medium', time: 'day' })).toBe(true);
+    expect(isCelestialEventVisible('sunset', { condition: 'cloudy', intensity: 'light', time: 'day' })).toBe(true);
+    expect(isCelestialEventVisible('sunset', { condition: 'cloudy', intensity: 'medium', time: 'day' })).toBe(true);
+    expect(isCelestialEventVisible('sunrise', { condition: 'cloudy', intensity: 'heavy', time: 'day' })).toBe(false);
+    expect(isCelestialEventVisible('sunrise', { condition: 'clear', intensity: 'medium', time: 'night' })).toBe(false);
+  });
+
+  it('allows moon events only in clear, wind, or light/medium cloudy nights', () => {
+    expect(isCelestialEventVisible('moonrise', { condition: 'clear', intensity: 'heavy', time: 'night' })).toBe(true);
+    expect(isCelestialEventVisible('moonrise', { condition: 'wind', intensity: 'medium', time: 'night' })).toBe(true);
+    expect(isCelestialEventVisible('moonset', { condition: 'cloudy', intensity: 'light', time: 'night' })).toBe(true);
+    expect(isCelestialEventVisible('moonset', { condition: 'cloudy', intensity: 'medium', time: 'night' })).toBe(true);
+    expect(isCelestialEventVisible('moonrise', { condition: 'cloudy', intensity: 'heavy', time: 'night' })).toBe(false);
+    expect(isCelestialEventVisible('moonrise', { condition: 'fog', intensity: 'medium', time: 'night' })).toBe(false);
+    expect(isCelestialEventVisible('moonrise', { condition: 'clear', intensity: 'medium', time: 'day' })).toBe(false);
   });
 });
