@@ -128,8 +128,63 @@ export function initClouds(config: ResolvedConfig, width: number, height: number
 export function updateClouds(blobs: CloudBlob[], delta: number, width: number): void {
   for (const b of blobs) {
     b.x += b.speed * delta;
-    if (b.x > width + b.width / 2) b.x = -b.width / 2;
+    const bounds = cloudVisualBounds(b);
+    if (b.x + bounds.minX > width) b.x = -bounds.maxX;
   }
+}
+
+export interface CloudVisualBounds {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+}
+
+export interface CloudSpriteMetrics {
+  width: number;
+  height: number;
+  centerX: number;
+  centerY: number;
+  blurRadius: number;
+}
+
+export function cloudVisualBounds(b: Pick<CloudBlob, 'width' | 'height' | 'lobes'>): CloudVisualBounds {
+  const rx = b.width / 2;
+  const ry = b.height / 2;
+
+  if (b.lobes.length === 0) {
+    return { minX: -rx, maxX: rx, minY: -ry, maxY: ry };
+  }
+
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+
+  for (const lobe of b.lobes) {
+    const cx = lobe.dx * rx;
+    const cy = lobe.dy * ry;
+    const r = lobe.r * ry;
+    minX = Math.min(minX, cx - r);
+    maxX = Math.max(maxX, cx + r);
+    minY = Math.min(minY, cy - r);
+    maxY = Math.max(maxY, cy + r);
+  }
+
+  return { minX, maxX, minY, maxY };
+}
+
+export function cloudSpriteMetrics(b: Pick<CloudBlob, 'width' | 'height' | 'lobes'>): CloudSpriteMetrics {
+  const bounds = cloudVisualBounds(b);
+  const blurRadius = Math.max(2, b.height * 0.5 * 0.12);
+  const edgePad = blurRadius * 4 + 2;
+  return {
+    width: Math.ceil(bounds.maxX - bounds.minX + edgePad * 2),
+    height: Math.ceil(bounds.maxY - bounds.minY + edgePad * 2),
+    centerX: edgePad - bounds.minX,
+    centerY: edgePad - bounds.minY,
+    blurRadius,
+  };
 }
 
 // Cloud shapes never change, only their position — so render each one to a sprite
@@ -139,14 +194,14 @@ export function updateClouds(blobs: CloudBlob[], delta: number, width: number): 
 function buildSprite(b: CloudBlob, config: ResolvedConfig): OffscreenCanvas {
   const rx = b.width / 2;
   const ry = b.height / 2;
-  const blurRadius = Math.max(2, ry * 0.12);
-  const pad = blurRadius * 4 + Math.max(ry, rx * 0.15);
-  const offW = Math.ceil(b.width + pad * 2);
-  const offH = Math.ceil(b.height + pad * 2);
+  const metrics = cloudSpriteMetrics(b);
+  const blurRadius = metrics.blurRadius;
+  const offW = metrics.width;
+  const offH = metrics.height;
   const off = new OffscreenCanvas(offW, offH);
   const c = off.getContext('2d')!;
-  const lx = offW / 2;
-  const ly = offH / 2;
+  const lx = metrics.centerX;
+  const ly = metrics.centerY;
   b.spriteCx = lx;
   b.spriteCy = ly;
 
