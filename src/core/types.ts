@@ -109,6 +109,10 @@ export function isCelestialEventVisible(
   return config.time === 'night';
 }
 
+export function isFidelityEffective(config: Pick<ResolvedConfig, 'condition'>): boolean {
+  return config.condition !== 'cloudy' && config.condition !== 'fog';
+}
+
 export function resolveConfig(config: WeatherConfig): ResolvedConfig {
   const condition: Condition = VALID_CONDITIONS.includes(config.condition as Condition)
     ? config.condition

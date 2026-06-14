@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isCelestialEventVisible, resolveConfig, VALID_CELESTIAL_EVENTS, VALID_CONDITIONS, VALID_MOON_PHASES } from '../../src/core/types';
+import { isCelestialEventVisible, isFidelityEffective, resolveConfig, VALID_CELESTIAL_EVENTS, VALID_CONDITIONS, VALID_MOON_PHASES } from '../../src/core/types';
 
 describe('hail condition', () => {
   it('is a valid condition', () => {
@@ -16,6 +16,19 @@ describe('resolveConfig fidelity', () => {
   });
   it('passes through rich', () => {
     expect(resolveConfig({ condition: 'rain', fidelity: 'rich' }).fidelity).toBe('rich');
+  });
+});
+
+describe('isFidelityEffective', () => {
+  it('is off where rich has no meaningful condition-level effect', () => {
+    expect(isFidelityEffective({ condition: 'cloudy' })).toBe(false);
+    expect(isFidelityEffective({ condition: 'fog' })).toBe(false);
+  });
+
+  it('is on for conditions with extra detail or particle behavior', () => {
+    for (const condition of ['clear', 'rain', 'snow', 'storm', 'wind', 'hail'] as const) {
+      expect(isFidelityEffective({ condition })).toBe(true);
+    }
   });
 });
 

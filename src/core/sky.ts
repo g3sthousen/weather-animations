@@ -21,8 +21,8 @@ const SKY_PALETTES: Record<PaletteKey, SkyPalette> = {
   'storm:night':  { top: hexToRgb('#0a0a0f'), bottom: hexToRgb('#11111b') },
   'fog:day':      { top: hexToRgb('#c8cdd2'), bottom: hexToRgb('#e8eaed') },
   'fog:night':    { top: hexToRgb('#374151'), bottom: hexToRgb('#4b5563') },
-  'wind:day':     { top: hexToRgb('#2563a8'), bottom: hexToRgb('#93c5fd') },
-  'wind:night':   { top: hexToRgb('#1e3a5f'), bottom: hexToRgb('#1e3a8a') },
+  'wind:day':     { top: hexToRgb('#3f6f98'), bottom: hexToRgb('#a7c9df') },
+  'wind:night':   { top: hexToRgb('#223b5c'), bottom: hexToRgb('#2a4778') },
   'hail:day':     { top: hexToRgb('#2f3b3a'), bottom: hexToRgb('#4a5a55') },
   'hail:night':   { top: hexToRgb('#141c1b'), bottom: hexToRgb('#212e2b') },
 };

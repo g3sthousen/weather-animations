@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { cloudSpriteMetrics, cloudVisualBounds, updateClouds } from '../../src/core/clouds';
+import { cloudSpriteMetrics, cloudVisualBounds, initClouds, updateClouds } from '../../src/core/clouds';
+import { seedRng } from '../../src/core/rng';
+import { resolveConfig } from '../../src/core/types';
 import type { CloudBlob } from '../../src/core/types';
 
 function makeWideCloud(): CloudBlob {
@@ -40,5 +42,35 @@ describe('cloud sprite geometry', () => {
     updateClouds([cloud], 1, 100);
 
     expect(cloud.x).toBe(100 - bounds.minX - 1);
+  });
+
+  it('uses fewer cloudy-like clouds for wind instead of narrow wisps', () => {
+    seedRng(12345);
+    const windy = initClouds(resolveConfig({ condition: 'wind', intensity: 'medium' }), 1000, 500);
+    seedRng(12345);
+    const cloudyLight = initClouds(resolveConfig({ condition: 'cloudy', intensity: 'light' }), 1000, 500);
+
+    expect(windy.length).toBeLessThan(cloudyLight.length);
+    expect(windy.length).toBeGreaterThanOrEqual(3);
+    expect(windy.every((cloud) => cloud.lobes.length >= 4)).toBe(true);
+    expect(Math.min(...windy.map((cloud) => cloud.height / 500))).toBeGreaterThan(0.08);
+    expect(Math.max(...windy.map((cloud) => cloud.alpha))).toBeLessThanOrEqual(
+      Math.max(...cloudyLight.map((cloud) => cloud.alpha)) * 1.15,
+    );
+  });
+
+  it('increases wind cloud drift speed by intensity', () => {
+    const averageSpeed = (intensity: 'light' | 'medium' | 'heavy') => {
+      seedRng(12345);
+      const clouds = initClouds(resolveConfig({ condition: 'wind', intensity }), 1000, 500);
+      return clouds.reduce((sum, cloud) => sum + cloud.speed, 0) / clouds.length;
+    };
+
+    const light = averageSpeed('light');
+    const medium = averageSpeed('medium');
+    const heavy = averageSpeed('heavy');
+
+    expect(medium).toBeGreaterThan(light * 1.2);
+    expect(heavy).toBeGreaterThan(medium * 1.15);
   });
 });

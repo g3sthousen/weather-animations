@@ -106,6 +106,16 @@ export function hailBounceConfig(intensity: ResolvedConfig['intensity'], rich: b
   };
 }
 
+const WIND_GUST_SPEED_MULTIPLIER: Record<ResolvedConfig['intensity'], number> = {
+  light: 0.7,
+  medium: 1,
+  heavy: 1.35,
+};
+
+export function windGustSpeedMultiplier(intensity: ResolvedConfig['intensity']): number {
+  return WIND_GUST_SPEED_MULTIPLIER[intensity];
+}
+
 // --- Particle System ---
 
 const POOL_SIZE = 900;
@@ -178,6 +188,13 @@ export class ParticleSystem {
         p.alpha = 0.5 + 0.5 * Math.sin(p.phase * 2.5 + p.size);
       }
 
+      if (cfg.condition === 'wind' && p.kind === 'primary') {
+        if (p.y > h + 30 || p.y < -30 || p.x < -p.length || p.x > w + 20) {
+          p.active = false;
+        }
+        continue;
+      }
+
       // Rain/storm impact → splash at the bottom edge (intensity-gated; rich = more, bigger).
       if ((cfg.condition === 'rain' || cfg.condition === 'storm') && p.kind === 'primary' && p.y > h && rainSplashes(cfg.intensity)) {
         const threshold = rich ? 0.3 : 0.6;
@@ -218,7 +235,7 @@ export class ParticleSystem {
       rain: 120 * scale,
       'storm-rain': 280 * scale,
       snow: 30 * scale,
-      wind: 60 * scale,
+      wind: 36 * scale,
       hail: 90 * scale,
     };
     const condKey = cfg.condition === 'storm' ? 'storm-rain' : cfg.condition;
@@ -231,7 +248,7 @@ export class ParticleSystem {
         if (cfg.condition === 'rain') spawnRain(this.pool, w);
         else if (cfg.condition === 'storm') spawnStormRain(this.pool, w);
         else if (cfg.condition === 'snow') spawnSnow(this.pool, w);
-        else if (cfg.condition === 'wind') spawnWind(this.pool, w, h, rich);
+        else if (cfg.condition === 'wind') spawnWind(this.pool, w, h, rich, cfg.intensity);
         else if (cfg.condition === 'hail') spawnHail(this.pool, w);
       }
     }
@@ -322,11 +339,14 @@ function drawParticle(ctx: CanvasRenderingContext2D, p: Particle, cfg: ResolvedC
       ctx.stroke();
     }
   } else if (cfg.condition === 'wind') {
-    ctx.strokeStyle = `rgba(180,210,240,${p.alpha})`;
-    ctx.lineWidth = 1;
+    const curve = -p.length * (0.04 + p.depth * 0.08) + Math.sin(p.phase * 0.7 + p.depth * 5) * p.length * 0.035;
+    const endDrift = Math.sin(p.phase * 0.9 + p.length) * 2.5;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(215,232,245,1)';
+    ctx.lineWidth = p.size;
     ctx.beginPath();
     ctx.moveTo(p.x, p.y);
-    ctx.quadraticCurveTo(p.x + p.length * 0.5, p.y - p.length * 0.12, p.x + p.length, p.y);
+    ctx.quadraticCurveTo(p.x + p.length * 0.52, p.y + curve, p.x + p.length, p.y + endDrift);
     ctx.stroke();
   } else if (cfg.condition === 'hail') {
     ctx.fillStyle = `rgba(225,235,245,${p.alpha})`;
@@ -447,22 +467,22 @@ function spawnStar(pool: ParticlePool, w: number, h: number): void {
   p.kind = 'primary';
 }
 
-function spawnWind(pool: ParticlePool, w: number, h: number, rich: boolean): void {
+function spawnWind(pool: ParticlePool, w: number, h: number, rich: boolean, intensity: ResolvedConfig['intensity']): void {
   const p = pool.spawn();
   if (!p) return;
   const depth = random();
-  const leaf = rich && random() < 0.12;
+  const speed = windGustSpeedMultiplier(intensity);
   p.x = -20;
   p.y = random() * h;
-  p.vx = (300 + random() * 200) * depthFactor(depth, 0.55, 1);
-  p.vy = leaf ? (random() - 0.5) * 40 : 0;
-  p.alpha = (0.2 + random() * 0.5) * depthFactor(depth, 0.5, 1);
-  p.size = leaf ? 3 + random() * 3 : 1;
-  p.length = (30 + random() * 60) * depthFactor(depth, 0.5, 1);
+  p.vx = (180 + random() * 170) * depthFactor(depth, 0.6, 1) * speed;
+  p.vy = (random() - 0.5) * (rich ? 16 : 9);
+  p.alpha = (0.12 + random() * 0.24) * depthFactor(depth, 0.55, 1);
+  p.size = (0.55 + random() * 0.85) * depthFactor(depth, 0.65, 1);
+  p.length = (26 + random() * 48) * depthFactor(depth, 0.62, 1);
   p.phase = random() * Math.PI * 2;
   p.depth = depth;
   p.bounces = 0;
-  p.kind = leaf ? 'leaf' : 'primary';
+  p.kind = 'primary';
 }
 
 function spawnHail(pool: ParticlePool, w: number): void {

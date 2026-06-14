@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { ParticlePool, getFidelityScale, depthFactor, rainSplashes, splashRadius, splashAlpha, gustOffset, bounceVelocity, shouldStopBouncing, hailBounceConfig } from '../../src/core/particles';
+import { ParticlePool, ParticleSystem, getFidelityScale, depthFactor, rainSplashes, splashRadius, splashAlpha, gustOffset, bounceVelocity, shouldStopBouncing, hailBounceConfig, windGustSpeedMultiplier } from '../../src/core/particles';
+import { seedRng } from '../../src/core/rng';
 import { resolveConfig } from '../../src/core/types';
 
 describe('ParticlePool', () => {
@@ -147,5 +148,53 @@ describe('hail bounce', () => {
   });
   it('keeps bouncing while energetic and under the cap', () => {
     expect(shouldStopBouncing(-300, 1, 2, 80)).toBe(false);
+  });
+});
+
+describe('wind particles', () => {
+  it('increases gust speed by intensity', () => {
+    expect(windGustSpeedMultiplier('light')).toBeLessThan(windGustSpeedMultiplier('medium'));
+    expect(windGustSpeedMultiplier('medium')).toBeLessThan(windGustSpeedMultiplier('heavy'));
+    expect(windGustSpeedMultiplier('medium')).toBe(1);
+  });
+
+  it('spawns subtle gust strokes without leaf particles in rich fidelity', () => {
+    seedRng(12345);
+    const system = new ParticleSystem();
+    system.init(resolveConfig({ condition: 'wind', intensity: 'medium', fidelity: 'rich' }), 800, 400);
+
+    for (let i = 0; i < 20; i++) system.update(0.1);
+
+    const particles = (system as any).pool.particles.filter((p: any) => p.active);
+    const gusts = particles.filter((p: any) => p.kind === 'primary');
+
+    expect(particles.every((p: any) => p.kind === 'primary')).toBe(true);
+    expect(gusts.length).toBeGreaterThan(20);
+    expect(Math.max(...gusts.map((p: any) => p.alpha))).toBeLessThanOrEqual(0.42);
+    expect(Math.max(...gusts.map((p: any) => p.length))).toBeLessThanOrEqual(82);
+  });
+
+  it('keeps a gust alive while any part of the stroke is still visible', () => {
+    const system = new ParticleSystem();
+    system.init(resolveConfig({ condition: 'wind' }), 100, 100);
+    const particle = (system as any).pool.particles[0];
+    Object.assign(particle, {
+      active: true,
+      kind: 'primary',
+      x: -50,
+      y: 50,
+      vx: 0,
+      vy: 0,
+      alpha: 0.3,
+      size: 1,
+      length: 80,
+      phase: 0,
+      depth: 0.5,
+      bounces: 0,
+    });
+
+    system.update(0);
+
+    expect(particle.active).toBe(true);
   });
 });

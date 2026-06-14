@@ -8,6 +8,7 @@ const LAYER_COUNTS: Record<0 | 1 | 2, number> = { 0: 4, 1: 5, 2: 6 };
 // light/medium/heavy read differently even when there are no particles.
 const INTENSITY_COUNT: Record<Intensity, number> = { light: 0.55, medium: 1, heavy: 1.5 };
 const INTENSITY_ALPHA: Record<Intensity, number> = { light: 0.75, medium: 1, heavy: 1.2 };
+const WIND_DRIFT_SPEED: Record<Intensity, number> = { light: 0.65, medium: 1, heavy: 1.35 };
 
 function cloudColor(config: ResolvedConfig, alpha: number): string {
   if (config.condition === 'storm') {
@@ -27,7 +28,7 @@ function cloudAlpha(config: ResolvedConfig, layer: 0 | 1 | 2): number {
   const base = config.condition === 'storm' ? 0.9
     : config.condition === 'hail' ? 0.85
     : config.condition === 'rain' ? 0.75
-    : config.condition === 'wind' ? 0.55
+    : config.condition === 'wind' ? 0.58
     : config.condition === 'cloudy' ? 0.7
     : 0.5;
   return Math.min(0.95, base * (1 - layer * 0.12) * INTENSITY_ALPHA[config.intensity]);
@@ -99,26 +100,44 @@ export function initClouds(config: ResolvedConfig, width: number, height: number
     return blobs;
   }
 
-  const layers: (0 | 1 | 2)[] = config.condition === 'wind' ? [2] : [0, 1, 2];
-  for (const layer of layers) {
-    const baseCount = config.condition === 'wind' ? 8 : LAYER_COUNTS[layer];
+  if (config.condition === 'wind') {
+    const count = config.intensity === 'light' ? 3 : config.intensity === 'medium' ? 5 : 6;
+    const layers: (0 | 1 | 2)[] = [0, 1, 2, 1, 2, 0];
+    for (let i = 0; i < count; i++) {
+      const layer = layers[i];
+      const layerScale = 1 + layer * 0.28;
+      const w = width * (0.20 + random() * 0.16) * layerScale;
+      const h = height * (0.10 + random() * 0.06) * layerScale;
+      blobs.push({
+        x: (i / count) * width * 1.35 - width * 0.18 + (random() - 0.5) * width * 0.10,
+        y: height * (0.06 + layer * 0.16 + random() * 0.07),
+        width: w,
+        height: h,
+        alpha: cloudAlpha(config, layer),
+        speed: width * (0.025 + layer * 0.012 + random() * 0.02) * WIND_DRIFT_SPEED[config.intensity],
+        layer,
+        lobes: generateLobes(w, h, random() < 0.45),
+      });
+    }
+    return blobs;
+  }
+
+  for (const layer of [0, 1, 2] as const) {
+    const baseCount = LAYER_COUNTS[layer];
     const count = Math.max(2, Math.round(baseCount * countMul));
     for (let i = 0; i < count; i++) {
-      const isWind = config.condition === 'wind';
       const layerScale = 1 + layer * 0.35;
-      const w = isWind
-        ? width * (0.15 + random() * 0.12)
-        : width * (0.22 + random() * 0.18) * layerScale;
-      const h = isWind ? height * 0.04 : height * (0.12 + random() * 0.08) * layerScale;
+      const w = width * (0.22 + random() * 0.18) * layerScale;
+      const h = height * (0.12 + random() * 0.08) * layerScale;
       blobs.push({
         x: (i / count) * width * 1.4 - width * 0.2,
         y: height * (0.04 + layer * 0.18 + random() * 0.08),
         width: w,
         height: h,
         alpha: cloudAlpha(config, layer),
-        speed: LAYER_SPEEDS[layer] * (isWind ? 3 : 1) * width,
+        speed: LAYER_SPEEDS[layer] * width,
         layer,
-        lobes: isWind ? [] : generateLobes(w, h, random() < 0.35),
+        lobes: generateLobes(w, h, random() < 0.35),
       });
     }
   }

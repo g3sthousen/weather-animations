@@ -1,4 +1,4 @@
-import { isCelestialEventVisible, WeatherScene } from '../core/index';
+import { isCelestialEventVisible, isFidelityEffective, WeatherScene } from '../core/index';
 import type { CelestialEvent, Condition, Intensity, TimeOfDay, Fidelity, MoonPhase } from '../core/index';
 import { seedRng } from '../core/rng';
 
@@ -71,8 +71,15 @@ function normalizeActiveCelestialEvent() {
   }
 }
 
+function normalizeActiveFidelity() {
+  if (!isFidelityEffective({ condition: activeCondition })) {
+    activeFidelity = 'subtle';
+  }
+}
+
 function render() {
   normalizeActiveCelestialEvent();
+  normalizeActiveFidelity();
   scene.set({
     condition: activeCondition,
     time: activeTime,
@@ -96,6 +103,7 @@ function buildControls() {
     btn.addEventListener('click', () => {
       activeCondition = cond;
       normalizeActiveCelestialEvent();
+      normalizeActiveFidelity();
       buildControls();
       render();
     });
@@ -124,11 +132,18 @@ function buildControls() {
 
   const fidRow = document.createElement('div');
   fidRow.className = 'btn-row';
+  const fidelityEnabled = isFidelityEffective({ condition: activeCondition });
   for (const f of ['subtle', 'rich'] as Fidelity[]) {
     const btn = document.createElement('button');
     btn.textContent = f === 'subtle' ? 'Subtle' : 'Rich';
+    btn.disabled = !fidelityEnabled;
     if (f === activeFidelity) btn.classList.add('active');
-    btn.addEventListener('click', () => { activeFidelity = f; buildControls(); render(); });
+    btn.addEventListener('click', () => {
+      if (!fidelityEnabled) return;
+      activeFidelity = f;
+      buildControls();
+      render();
+    });
     fidRow.appendChild(btn);
   }
 
@@ -179,6 +194,7 @@ function buildControls() {
 }
 
 normalizeActiveCelestialEvent();
+normalizeActiveFidelity();
 buildControls();
 render();
 if (manual) scene.advance(Number(framesParam));
