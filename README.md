@@ -234,6 +234,96 @@ const config = normalizeWeatherInput({
 new WeatherScene(container).set(config);
 ```
 
+### OpenWeather Example
+
+OpenWeather's Current Weather API returns provider-specific condition IDs and fields such as `weather[0].id`, `clouds.all`, `wind.speed`, `visibility`, `rain["1h"]`, `snow["1h"]`, `dt`, `timezone`, `sys.sunrise`, and `sys.sunset`. Keep that mapping in your app, then pass the normalized result into the renderer:
+
+```js
+import { normalizeWeatherInput, WeatherScene } from 'weather-animations';
+
+function intensityFromMmPerHour(mmPerHour) {
+  if (typeof mmPerHour !== 'number') return undefined;
+  if (mmPerHour < 1) return 'light';
+  if (mmPerHour < 4) return 'medium';
+  return 'heavy';
+}
+
+function timeFromOpenWeather(openWeather) {
+  const timezone = openWeather.timezone ?? 0;
+  const current = (openWeather.dt ?? 0) + timezone;
+  const sunrise = (openWeather.sys?.sunrise ?? 0) + timezone;
+  const sunset = (openWeather.sys?.sunset ?? 0) + timezone;
+
+  return current >= sunrise && current < sunset ? 'day' : 'night';
+}
+
+function mapOpenWeatherToWeatherAnimations(openWeather) {
+  const weather = openWeather.weather?.[0] ?? {};
+  const id = weather.id;
+  const description = String(weather.description ?? '').toLowerCase();
+  const rain1h = openWeather.rain?.['1h'];
+  const snow1h = openWeather.snow?.['1h'];
+  const precipitationAmount = rain1h ?? snow1h;
+  const baseInput = {
+    windSpeed: openWeather.wind?.speed,
+    visibility: openWeather.visibility,
+    precipitationIntensity: intensityFromMmPerHour(precipitationAmount),
+    time: timeFromOpenWeather(openWeather),
+  };
+
+  if (id >= 200 && id < 300) {
+    return normalizeWeatherInput({ ...baseInput, thunderstorm: true });
+  } else if (id >= 300 && id < 400) {
+    return normalizeWeatherInput({ ...baseInput, precipitationType: 'drizzle' });
+  } else if (id >= 500 && id < 600) {
+    if (id === 511 || description.includes('freezing')) {
+      return normalizeWeatherInput({ ...baseInput, precipitationType: 'freezing-rain' });
+    }
+    if (id >= 520 || description.includes('shower')) {
+      return normalizeWeatherInput({ ...baseInput, phenomenon: 'showers' });
+    }
+    return normalizeWeatherInput({ ...baseInput, precipitationType: 'rain' });
+  } else if (id >= 600 && id < 700) {
+    if ([611, 612, 613, 615, 616].includes(id)) {
+      return normalizeWeatherInput({ ...baseInput, precipitationType: 'sleet' });
+    }
+    if (id >= 620 || description.includes('flurr')) {
+      return normalizeWeatherInput({ ...baseInput, phenomenon: 'flurries' });
+    }
+    return normalizeWeatherInput({ ...baseInput, precipitationType: 'snow' });
+  } else if (id >= 700 && id < 800) {
+    if (id === 701) return normalizeWeatherInput({ ...baseInput, visibility: 'mist' });
+    if (id === 711) return normalizeWeatherInput({ ...baseInput, visibility: 'smoke' });
+    if (id === 721) return normalizeWeatherInput({ ...baseInput, visibility: 'haze' });
+    if (id === 741) return normalizeWeatherInput({ ...baseInput, visibility: 'fog' });
+    if ([731, 751, 761, 762].includes(id)) {
+      return normalizeWeatherInput({ ...baseInput, visibility: 'dust' });
+    }
+  } else if (id === 800) {
+    return normalizeWeatherInput({
+      ...baseInput,
+      cloudCover: openWeather.clouds?.all,
+      phenomenon: 'clear',
+    });
+  } else if (id >= 801 && id <= 804) {
+    return normalizeWeatherInput({
+      ...baseInput,
+      cloudCover: openWeather.clouds?.all,
+    });
+  }
+
+  return normalizeWeatherInput({
+    ...baseInput,
+    cloudCover: openWeather.clouds?.all,
+  });
+}
+
+const weatherConfig = mapOpenWeatherToWeatherAnimations(openWeatherResponse);
+new WeatherScene(container).set(weatherConfig);
+```
+
+This is a starting point, not universal meteorological truth. Tune the thresholds and rare-condition mappings for your app, region, and OpenWeather product. See the [OpenWeather Current Weather API](https://openweathermap.org/api/current) and [OpenWeather condition codes](https://openweathermap.org/api/weather-conditions) for the source fields.
+
 Keep provider-specific code tables outside the renderer, then pass the normalized result into `WeatherScene.set()` or `WeatherBackground`.
 
 ## Development
