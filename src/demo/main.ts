@@ -176,11 +176,18 @@ function buildControls() {
 
   const progressRow = document.createElement('div');
   progressRow.className = 'btn-row progress-row';
+  const progressEnabled = activeCelestialEvent !== 'none';
   for (const progress of CELESTIAL_PROGRESS_STEPS) {
     const btn = document.createElement('button');
     btn.textContent = `${Math.round(progress * 100)}%`;
+    btn.disabled = !progressEnabled;
     if (Math.abs(progress - activeCelestialProgress) < 0.001) btn.classList.add('active');
-    btn.addEventListener('click', () => { activeCelestialProgress = progress; buildControls(); render(); });
+    btn.addEventListener('click', () => {
+      if (!progressEnabled) return;
+      activeCelestialProgress = progress;
+      buildControls();
+      render();
+    });
     progressRow.appendChild(btn);
   }
 
