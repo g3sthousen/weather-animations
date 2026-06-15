@@ -1,6 +1,12 @@
 # Weather Animations
 
+[![npm version](https://img.shields.io/npm/v/weather-animations)](https://www.npmjs.com/package/weather-animations)
+[![npm downloads](https://img.shields.io/npm/dm/weather-animations)](https://www.npmjs.com/package/weather-animations)
+[![license](https://img.shields.io/npm/l/weather-animations)](https://www.npmjs.com/package/weather-animations)
+
 Canvas-powered TypeScript weather backgrounds with smooth transitions, configurable intensity, day/night palettes, moon phases, and sunrise, sunset, moonrise, and moonset events.
+
+npm package: [weather-animations](https://www.npmjs.com/package/weather-animations)
 
 Live demo: [g3sthousen.github.io/weather-animations](https://g3sthousen.github.io/weather-animations/)
 
