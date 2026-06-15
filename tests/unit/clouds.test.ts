@@ -73,4 +73,26 @@ describe('cloud sprite geometry', () => {
     expect(medium).toBeGreaterThan(light * 1.2);
     expect(heavy).toBeGreaterThan(medium * 1.15);
   });
+
+  it('renders overcast as denser cloud cover than heavy cloudy', () => {
+    seedRng(12345);
+    const overcast = initClouds(resolveConfig({ condition: 'overcast', intensity: 'medium' }), 1000, 500);
+    seedRng(12345);
+    const cloudyHeavy = initClouds(resolveConfig({ condition: 'cloudy', intensity: 'heavy' }), 1000, 500);
+
+    expect(overcast.length).toBeGreaterThanOrEqual(cloudyHeavy.length);
+    expect(Math.min(...overcast.map((cloud) => cloud.width / 1000))).toBeGreaterThan(0.28);
+    expect(Math.min(...overcast.map((cloud) => cloud.alpha))).toBeGreaterThan(0.68);
+  });
+
+  it('uses rain-like cloud cover for drizzle and sleet', () => {
+    seedRng(12345);
+    const drizzle = initClouds(resolveConfig({ condition: 'drizzle', intensity: 'light' }), 1000, 500);
+    seedRng(12345);
+    const sleet = initClouds(resolveConfig({ condition: 'sleet', intensity: 'medium' }), 1000, 500);
+
+    expect(drizzle.length).toBeGreaterThan(0);
+    expect(sleet.length).toBeGreaterThan(drizzle.length);
+    expect(Math.max(...drizzle.map((cloud) => cloud.alpha))).toBeLessThan(0.8);
+  });
 });

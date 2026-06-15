@@ -198,3 +198,39 @@ describe('wind particles', () => {
     expect(particle.active).toBe(true);
   });
 });
+
+describe('expanded condition particles', () => {
+  it('spawns drizzle as fewer and finer rain strokes', () => {
+    seedRng(12345);
+    const drizzle = new ParticleSystem();
+    drizzle.init(resolveConfig({ condition: 'drizzle', intensity: 'medium' }), 800, 400);
+    for (let i = 0; i < 20; i++) drizzle.update(0.1);
+
+    seedRng(12345);
+    const rain = new ParticleSystem();
+    rain.init(resolveConfig({ condition: 'rain', intensity: 'medium' }), 800, 400);
+    for (let i = 0; i < 20; i++) rain.update(0.1);
+
+    const drizzleParticles = (drizzle as any).pool.particles.filter((p: any) => p.active && p.kind === 'primary');
+    const rainParticles = (rain as any).pool.particles.filter((p: any) => p.active && p.kind === 'primary');
+
+    expect(drizzleParticles.length).toBeGreaterThan(10);
+    expect(drizzleParticles.length).toBeLessThan(rainParticles.length);
+    expect(Math.max(...drizzleParticles.map((p: any) => p.length))).toBeLessThan(14);
+    expect(Math.max(...drizzleParticles.map((p: any) => p.alpha))).toBeLessThan(0.55);
+  });
+
+  it('spawns sleet as both rain streaks and snow-like pellets', () => {
+    seedRng(12345);
+    const system = new ParticleSystem();
+    system.init(resolveConfig({ condition: 'sleet', intensity: 'heavy' }), 800, 400);
+    for (let i = 0; i < 20; i++) system.update(0.1);
+
+    const particles = (system as any).pool.particles.filter((p: any) => p.active && p.kind === 'primary');
+    const streaks = particles.filter((p: any) => p.length > 0);
+    const pellets = particles.filter((p: any) => p.length === 0);
+
+    expect(streaks.length).toBeGreaterThan(10);
+    expect(pellets.length).toBeGreaterThan(5);
+  });
+});

@@ -25,6 +25,16 @@ const SKY_PALETTES: Record<PaletteKey, SkyPalette> = {
   'wind:night':   { top: hexToRgb('#223b5c'), bottom: hexToRgb('#2a4778') },
   'hail:day':     { top: hexToRgb('#2f3b3a'), bottom: hexToRgb('#4a5a55') },
   'hail:night':   { top: hexToRgb('#141c1b'), bottom: hexToRgb('#212e2b') },
+  'drizzle:day':  { top: hexToRgb('#718394'), bottom: hexToRgb('#b7c6cf') },
+  'drizzle:night': { top: hexToRgb('#202936'), bottom: hexToRgb('#354455') },
+  'overcast:day': { top: hexToRgb('#5f6b76'), bottom: hexToRgb('#9ea9b1') },
+  'overcast:night': { top: hexToRgb('#1b222c'), bottom: hexToRgb('#303946') },
+  'mist:day':     { top: hexToRgb('#b8c4ca'), bottom: hexToRgb('#e1e6e8') },
+  'mist:night':   { top: hexToRgb('#303a46'), bottom: hexToRgb('#4a5560') },
+  'haze:day':     { top: hexToRgb('#b7a98d'), bottom: hexToRgb('#e7d5b5') },
+  'haze:night':   { top: hexToRgb('#323041'), bottom: hexToRgb('#50495c') },
+  'sleet:day':    { top: hexToRgb('#778690'), bottom: hexToRgb('#c4d0d6') },
+  'sleet:night':  { top: hexToRgb('#202832'), bottom: hexToRgb('#3a4652') },
 };
 
 function getPalette(config: ResolvedConfig): SkyPalette {

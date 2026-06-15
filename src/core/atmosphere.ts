@@ -10,6 +10,7 @@ interface FogPlume {
   phase: number;
   sprite?: OffscreenCanvas;
   spriteR?: number;
+  spriteKey?: string;
 }
 
 export function fogBob(time: number, baseY: number, amp: number, freq: number, phase: number): number {
@@ -73,12 +74,25 @@ export interface AtmosphereState {
   boltPoints: Array<[number, number]> | null;
   time: number;
   fogPlumes: FogPlume[] | null;
+  fogPlumeKey: string | null;
   preflicker: number;       // brief pre-strike flicker [0..1]
   boltBranches: Array<Array<[number, number]>> | null;
 }
 
 export function createAtmosphereState(): AtmosphereState {
-  return { lightningFlash: 0, lightningTimer: 2000, boltPoints: null, time: 0, fogPlumes: null, preflicker: 0, boltBranches: null };
+  return { lightningFlash: 0, lightningTimer: 2000, boltPoints: null, time: 0, fogPlumes: null, fogPlumeKey: null, preflicker: 0, boltBranches: null };
+}
+
+function hazePlumeCount(config: ResolvedConfig): number {
+  if (config.intensity === 'light') return 2;
+  if (config.intensity === 'heavy') return 5;
+  return 3;
+}
+
+function hazeStepY(config: ResolvedConfig): number {
+  if (config.intensity === 'light') return 0.14;
+  if (config.intensity === 'heavy') return 0.13;
+  return 0.18;
 }
 
 export function updateAtmosphere(state: AtmosphereState, config: ResolvedConfig, delta: number): void {
@@ -114,16 +128,21 @@ export function updateAtmosphere(state: AtmosphereState, config: ResolvedConfig,
     state.boltBranches = null;
   }
 
-  if (config.condition === 'fog') {
-    if (!state.fogPlumes) {
-      state.fogPlumes = Array.from({ length: 4 }, (_, i) => ({
+  if (config.condition === 'fog' || config.condition === 'mist' || config.condition === 'haze') {
+    const plumeKey = `${config.condition}:${config.intensity}`;
+    if (!state.fogPlumes || state.fogPlumeKey !== plumeKey) {
+      const count = config.condition === 'fog' ? 4 : config.condition === 'mist' ? 2 : hazePlumeCount(config);
+      const startY = config.condition === 'haze' ? 0.25 : config.condition === 'mist' ? 0.18 : 0.45;
+      const stepY = config.condition === 'haze' ? hazeStepY(config) : config.condition === 'mist' ? 0.2 : 0.14;
+      state.fogPlumes = Array.from({ length: count }, (_, i) => ({
         baseX: random(),
-        baseY: 0.45 + i * 0.14 + random() * 0.06,
-        speed: 0.01 + random() * 0.02,
-        bobAmp: 8 + random() * 10,
+        baseY: startY + i * stepY + random() * 0.06,
+        speed: (config.condition === 'haze' ? 0.006 : 0.01) + random() * 0.02,
+        bobAmp: (config.condition === 'fog' ? 8 : config.condition === 'mist' ? 3 : 5) + random() * 10,
         bobFreq: 0.15 + random() * 0.15,
         phase: random() * Math.PI * 2,
       }));
+      state.fogPlumeKey = plumeKey;
     }
     for (const pl of state.fogPlumes) {
       pl.baseX += pl.speed * delta;
@@ -131,6 +150,7 @@ export function updateAtmosphere(state: AtmosphereState, config: ResolvedConfig,
     }
   } else {
     state.fogPlumes = null;
+    state.fogPlumeKey = null;
   }
 }
 
@@ -147,7 +167,7 @@ export function drawAtmosphere(
 
   drawCelestialEventOverlay(ctx, config, alpha, width, height);
 
-  if (config.condition === 'fog') {
+  if (config.condition === 'fog' || config.condition === 'mist' || config.condition === 'haze') {
     drawFog(ctx, config, state, width, height);
   }
 
@@ -480,14 +500,26 @@ function getMoonPhaseShape(phase: MoonPhase): { kind: 'full' } | { kind: 'cresce
   }
 }
 
-function buildPlumeSprite(radius: number, night: boolean): OffscreenCanvas {
+function buildPlumeSprite(radius: number, config: ResolvedConfig): OffscreenCanvas {
   const size = Math.ceil(radius * 2);
   const off = new OffscreenCanvas(size, size);
   const c = off.getContext('2d')!;
-  const rgb = night ? '90,100,112' : '205,210,216';
+  const night = config.time === 'night';
+  const rgb = config.condition === 'haze'
+    ? night ? '118,106,120' : '218,198,158'
+    : config.condition === 'mist'
+      ? night ? '112,124,136' : '225,232,235'
+      : night ? '90,100,112' : '205,210,216';
+  const hazeAlpha = config.intensity === 'light'
+    ? { center: 0.11, mid: 0.045 }
+    : config.intensity === 'heavy'
+      ? { center: 0.34, mid: 0.16 }
+      : { center: 0.22, mid: 0.1 };
+  const centerAlpha = config.condition === 'fog' ? 0.5 : config.condition === 'mist' ? 0.16 : hazeAlpha.center;
+  const midAlpha = config.condition === 'fog' ? 0.22 : config.condition === 'mist' ? 0.065 : hazeAlpha.mid;
   const g = c.createRadialGradient(radius, radius, 0, radius, radius, radius);
-  g.addColorStop(0, `rgba(${rgb},0.5)`);
-  g.addColorStop(0.5, `rgba(${rgb},0.22)`);
+  g.addColorStop(0, `rgba(${rgb},${centerAlpha})`);
+  g.addColorStop(0.5, `rgba(${rgb},${midAlpha})`);
   g.addColorStop(1, `rgba(${rgb},0)`);
   c.fillStyle = g;
   c.beginPath();
@@ -504,12 +536,18 @@ function drawFog(
   height: number,
 ): void {
   if (!state.fogPlumes) return;
-  const night = config.time === 'night';
-  const radius = width * 0.4;
+  const hazeRadius = config.intensity === 'light' ? 0.36 : config.intensity === 'heavy' ? 0.58 : 0.46;
+  const hazeOpacity = config.intensity === 'light' ? 0.28 : config.intensity === 'heavy' ? 0.72 : 0.5;
+  const radius = width * (config.condition === 'fog' ? 0.4 : config.condition === 'mist' ? 0.28 : hazeRadius);
+  const opacity = config.condition === 'fog' ? 1 : config.condition === 'mist' ? 0.42 : hazeOpacity;
+  ctx.save();
+  ctx.globalAlpha *= opacity;
   for (const pl of state.fogPlumes) {
-    if (!pl.sprite || pl.spriteR !== radius) {
-      pl.sprite = buildPlumeSprite(radius, night);
+    const key = `${config.condition}:${config.time}`;
+    if (!pl.sprite || pl.spriteR !== radius || pl.spriteKey !== key) {
+      pl.sprite = buildPlumeSprite(radius, config);
       pl.spriteR = radius;
+      pl.spriteKey = key;
     }
     const x = pl.baseX * width - radius;
     const y = fogBob(state.time, pl.baseY * height, pl.bobAmp, pl.bobFreq, pl.phase) - radius;
@@ -519,4 +557,5 @@ function drawFog(
       ctx.drawImage(pl.sprite, x - width - radius * 2, y);
     }
   }
+  ctx.restore();
 }

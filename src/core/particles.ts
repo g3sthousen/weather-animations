@@ -178,10 +178,10 @@ export class ParticleSystem {
         p.phase += delta * 6;
       }
 
-      if (cfg.condition === 'snow') {
+      if (cfg.condition === 'snow' || (cfg.condition === 'sleet' && p.length === 0)) {
         p.vx = Math.sin(p.phase * 0.8) * 18;
       }
-      if (cfg.condition === 'rain') {
+      if (cfg.condition === 'rain' || cfg.condition === 'drizzle' || (cfg.condition === 'sleet' && p.length > 0)) {
         p.vx = gust * depthFactor(p.depth, 0.6, 1);
       }
       if (cfg.condition === 'clear' && cfg.time === 'night') {
@@ -233,8 +233,10 @@ export class ParticleSystem {
 
     const rates: Partial<Record<string, number>> = {
       rain: 120 * scale,
+      drizzle: 54 * scale,
       'storm-rain': 280 * scale,
       snow: 30 * scale,
+      sleet: 120 * scale,
       wind: 36 * scale,
       hail: 90 * scale,
     };
@@ -246,8 +248,10 @@ export class ParticleSystem {
       while (this.spawnAccum >= 1) {
         this.spawnAccum -= 1;
         if (cfg.condition === 'rain') spawnRain(this.pool, w);
+        else if (cfg.condition === 'drizzle') spawnDrizzle(this.pool, w);
         else if (cfg.condition === 'storm') spawnStormRain(this.pool, w);
         else if (cfg.condition === 'snow') spawnSnow(this.pool, w);
+        else if (cfg.condition === 'sleet') spawnSleet(this.pool, w);
         else if (cfg.condition === 'wind') spawnWind(this.pool, w, h, rich, cfg.intensity);
         else if (cfg.condition === 'hail') spawnHail(this.pool, w);
       }
@@ -304,14 +308,23 @@ function drawParticle(ctx: CanvasRenderingContext2D, p: Particle, cfg: ResolvedC
 
   ctx.globalAlpha = systemAlpha * p.alpha;
 
-  if (cfg.condition === 'rain' || cfg.condition === 'storm') {
-    ctx.strokeStyle = cfg.condition === 'storm' ? 'rgba(180,200,220,0.8)' : 'rgba(160,190,220,0.7)';
-    ctx.lineWidth = cfg.condition === 'storm' ? 1.5 : 1;
+  if (cfg.condition === 'rain'
+    || cfg.condition === 'storm'
+    || cfg.condition === 'drizzle'
+    || (cfg.condition === 'sleet' && p.length > 0)) {
+    ctx.strokeStyle = cfg.condition === 'storm'
+      ? 'rgba(180,200,220,0.8)'
+      : cfg.condition === 'sleet'
+        ? 'rgba(190,210,222,0.72)'
+        : cfg.condition === 'drizzle'
+          ? 'rgba(175,198,215,0.48)'
+          : 'rgba(160,190,220,0.7)';
+    ctx.lineWidth = cfg.condition === 'storm' ? 1.5 : cfg.condition === 'drizzle' ? 0.75 : 1;
     ctx.beginPath();
     ctx.moveTo(p.x, p.y);
     ctx.lineTo(p.x + p.vx * 0.04, p.y + p.length);
     ctx.stroke();
-  } else if (cfg.condition === 'snow') {
+  } else if (cfg.condition === 'snow' || (cfg.condition === 'sleet' && p.length === 0)) {
     if (p.depth < 0.5) {
       const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
       g.addColorStop(0, `rgba(255,255,255,${p.alpha})`);
@@ -417,6 +430,23 @@ function spawnRain(pool: ParticlePool, w: number): void {
   p.kind = 'primary';
 }
 
+function spawnDrizzle(pool: ParticlePool, w: number): void {
+  const p = pool.spawn();
+  if (!p) return;
+  const depth = random();
+  p.x = random() * (w + 80) - 40;
+  p.y = -10;
+  p.vx = -12 * depthFactor(depth, 0.5, 1);
+  p.vy = (420 + random() * 160) * depthFactor(depth, 0.55, 1);
+  p.alpha = (0.22 + random() * 0.24) * depthFactor(depth, 0.55, 1);
+  p.size = 0.75;
+  p.length = (6 + random() * 6) * depthFactor(depth, 0.55, 1);
+  p.phase = 0;
+  p.depth = depth;
+  p.bounces = 0;
+  p.kind = 'primary';
+}
+
 function spawnStormRain(pool: ParticlePool, w: number): void {
   const p = pool.spawn();
   if (!p) return;
@@ -443,6 +473,48 @@ function spawnSnow(pool: ParticlePool, w: number): void {
   p.vy = (40 + random() * 50) * depthFactor(depth, 0.5, 1);
   p.alpha = (0.6 + random() * 0.4) * depthFactor(depth, 0.5, 1);
   p.size = (1.5 + random() * 3) * depthFactor(depth, 0.5, 1);
+  p.length = 0;
+  p.phase = random() * Math.PI * 2;
+  p.depth = depth;
+  p.bounces = 0;
+  p.kind = 'primary';
+}
+
+function spawnSleet(pool: ParticlePool, w: number): void {
+  if (random() < 0.58) {
+    spawnSleetRain(pool, w);
+  } else {
+    spawnSleetPellet(pool, w);
+  }
+}
+
+function spawnSleetRain(pool: ParticlePool, w: number): void {
+  const p = pool.spawn();
+  if (!p) return;
+  const depth = random();
+  p.x = random() * (w + 90) - 45;
+  p.y = -10;
+  p.vx = -16 * depthFactor(depth, 0.6, 1);
+  p.vy = (560 + random() * 190) * depthFactor(depth, 0.55, 1);
+  p.alpha = (0.4 + random() * 0.35) * depthFactor(depth, 0.5, 1);
+  p.size = 1;
+  p.length = (8 + random() * 8) * depthFactor(depth, 0.55, 1);
+  p.phase = 0;
+  p.depth = depth;
+  p.bounces = 0;
+  p.kind = 'primary';
+}
+
+function spawnSleetPellet(pool: ParticlePool, w: number): void {
+  const p = pool.spawn();
+  if (!p) return;
+  const depth = random();
+  p.x = random() * w;
+  p.y = -10;
+  p.vx = 0;
+  p.vy = (120 + random() * 90) * depthFactor(depth, 0.5, 1);
+  p.alpha = (0.55 + random() * 0.35) * depthFactor(depth, 0.55, 1);
+  p.size = (1 + random() * 2.2) * depthFactor(depth, 0.55, 1);
   p.length = 0;
   p.phase = random() * Math.PI * 2;
   p.depth = depth;

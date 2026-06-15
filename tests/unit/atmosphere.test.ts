@@ -1,6 +1,6 @@
 // tests/unit/atmosphere.test.ts
 import { describe, it, expect } from 'vitest';
-import { celestialPosition, createAtmosphereState, drawAtmosphere, fogBob, getCelestialOpacity } from '../../src/core/atmosphere';
+import { celestialPosition, createAtmosphereState, drawAtmosphere, fogBob, getCelestialOpacity, updateAtmosphere } from '../../src/core/atmosphere';
 import { resolveConfig, type ResolvedConfig } from '../../src/core/types';
 
 function createRecordingContext(): CanvasRenderingContext2D & { fillRects: Array<[number, number, number, number]> } {
@@ -29,6 +29,36 @@ describe('fogBob', () => {
   });
   it('respects phase offset', () => {
     expect(fogBob(0, 100, 10, 0.5, Math.PI / 2)).toBeCloseTo(110);
+  });
+});
+
+describe('haze intensity', () => {
+  it('increases haze plume count and vertical coverage by intensity', () => {
+    const light = createAtmosphereState();
+    const medium = createAtmosphereState();
+    const heavy = createAtmosphereState();
+
+    updateAtmosphere(light, resolveConfig({ condition: 'haze', intensity: 'light' }), 0);
+    updateAtmosphere(medium, resolveConfig({ condition: 'haze', intensity: 'medium' }), 0);
+    updateAtmosphere(heavy, resolveConfig({ condition: 'haze', intensity: 'heavy' }), 0);
+
+    expect(light.fogPlumes?.length).toBe(2);
+    expect(medium.fogPlumes?.length).toBe(3);
+    expect(heavy.fogPlumes?.length).toBe(5);
+    const lastHeavy = heavy.fogPlumes?.[heavy.fogPlumes.length - 1]?.baseY ?? 0;
+    const lastMedium = medium.fogPlumes?.[medium.fogPlumes.length - 1]?.baseY ?? 0;
+    expect(lastHeavy).toBeGreaterThan(lastMedium);
+  });
+
+  it('rebuilds haze plumes when intensity changes', () => {
+    const state = createAtmosphereState();
+
+    updateAtmosphere(state, resolveConfig({ condition: 'haze', intensity: 'light' }), 0);
+    expect(state.fogPlumes?.length).toBe(2);
+
+    updateAtmosphere(state, resolveConfig({ condition: 'haze', intensity: 'heavy' }), 0);
+
+    expect(state.fogPlumes?.length).toBe(5);
   });
 });
 

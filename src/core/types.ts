@@ -1,4 +1,17 @@
-export type Condition = 'clear' | 'cloudy' | 'rain' | 'snow' | 'storm' | 'fog' | 'wind' | 'hail';
+export type Condition =
+  | 'clear'
+  | 'cloudy'
+  | 'rain'
+  | 'snow'
+  | 'storm'
+  | 'fog'
+  | 'wind'
+  | 'hail'
+  | 'drizzle'
+  | 'overcast'
+  | 'mist'
+  | 'haze'
+  | 'sleet';
 export type Intensity = 'light' | 'medium' | 'heavy';
 export type TimeOfDay = 'day' | 'night';
 export type Fidelity = 'subtle' | 'rich';
@@ -22,6 +35,26 @@ export interface WeatherConfig {
   moonPhase?: MoonPhase;
   celestialEvent?: CelestialEvent;
   celestialProgress?: number;
+}
+
+export type WeatherInputPrecipitationType = 'none' | 'rain' | 'drizzle' | 'snow' | 'sleet' | 'hail';
+export type WeatherInputVisibility = 'clear' | 'haze' | 'mist' | 'fog' | number;
+export type WeatherInputPhenomenon =
+  | Condition
+  | 'thunderstorm'
+  | 'showers'
+  | 'partly-cloudy'
+  | 'mostly-cloudy';
+
+export interface WeatherInput {
+  phenomenon?: WeatherInputPhenomenon | string;
+  cloudCover?: number;
+  precipitationType?: WeatherInputPrecipitationType | string;
+  precipitationIntensity?: Intensity | number;
+  windSpeed?: number;
+  visibility?: WeatherInputVisibility;
+  thunderstorm?: boolean;
+  time?: TimeOfDay;
 }
 
 export interface ResolvedConfig {
@@ -80,7 +113,21 @@ export interface CloudBlob {
   spriteKey?: string;
 }
 
-export const VALID_CONDITIONS: Condition[] = ['clear', 'cloudy', 'rain', 'snow', 'storm', 'fog', 'wind', 'hail'];
+export const VALID_CONDITIONS: Condition[] = [
+  'clear',
+  'cloudy',
+  'rain',
+  'snow',
+  'storm',
+  'fog',
+  'wind',
+  'hail',
+  'drizzle',
+  'overcast',
+  'mist',
+  'haze',
+  'sleet',
+];
 export const VALID_CELESTIAL_EVENTS: CelestialEvent[] = ['none', 'sunrise', 'sunset', 'moonrise', 'moonset'];
 export const VALID_MOON_PHASES: MoonPhase[] = [
   'new',
@@ -110,7 +157,11 @@ export function isCelestialEventVisible(
 }
 
 export function isFidelityEffective(config: Pick<ResolvedConfig, 'condition'>): boolean {
-  return config.condition !== 'cloudy' && config.condition !== 'fog';
+  return config.condition !== 'cloudy'
+    && config.condition !== 'fog'
+    && config.condition !== 'overcast'
+    && config.condition !== 'mist'
+    && config.condition !== 'haze';
 }
 
 export function resolveConfig(config: WeatherConfig): ResolvedConfig {
@@ -139,5 +190,124 @@ export function resolveConfig(config: WeatherConfig): ResolvedConfig {
     moonPhase,
     celestialEvent,
     celestialProgress,
+  };
+}
+
+function isValidIntensity(value: unknown): value is Intensity {
+  return value === 'light' || value === 'medium' || value === 'heavy';
+}
+
+function normalizeIntensity(value: WeatherInput['precipitationIntensity'], fallback: Intensity = 'medium'): Intensity {
+  if (isValidIntensity(value)) return value;
+  if (typeof value !== 'number' || !Number.isFinite(value)) return fallback;
+  if (value <= 0.33) return 'light';
+  if (value <= 0.66) return 'medium';
+  return 'heavy';
+}
+
+function cloudCoverIntensity(cloudCover: number): Intensity {
+  if (cloudCover < 35) return 'light';
+  if (cloudCover < 85) return 'medium';
+  return 'heavy';
+}
+
+function windIntensity(windSpeed: number): Intensity {
+  if (windSpeed < 20) return 'light';
+  if (windSpeed < 45) return 'medium';
+  return 'heavy';
+}
+
+function conditionFromPhenomenon(phenomenon: string | undefined): Condition | null {
+  if (!phenomenon) return null;
+  if (VALID_CONDITIONS.includes(phenomenon as Condition)) return phenomenon as Condition;
+  if (phenomenon === 'thunderstorm') return 'storm';
+  if (phenomenon === 'showers') return 'rain';
+  if (phenomenon === 'partly-cloudy' || phenomenon === 'mostly-cloudy') return 'cloudy';
+  return null;
+}
+
+function intensityFromPhenomenon(phenomenon: string | undefined): Intensity | null {
+  if (phenomenon === 'partly-cloudy') return 'light';
+  if (phenomenon === 'mostly-cloudy') return 'medium';
+  return null;
+}
+
+function conditionFromVisibility(visibility: WeatherInputVisibility | undefined): { condition: Condition; intensity: Intensity } | null {
+  if (visibility === undefined || visibility === 'clear') return null;
+  if (visibility === 'fog') return { condition: 'fog', intensity: 'medium' };
+  if (visibility === 'mist') return { condition: 'mist', intensity: 'medium' };
+  if (visibility === 'haze') return { condition: 'haze', intensity: 'medium' };
+  if (typeof visibility !== 'number' || !Number.isFinite(visibility)) return null;
+  if (visibility < 1000) return { condition: 'fog', intensity: 'heavy' };
+  if (visibility < 3000) return { condition: 'fog', intensity: 'medium' };
+  if (visibility < 6000) return { condition: 'mist', intensity: 'medium' };
+  if (visibility < 10000) return { condition: 'haze', intensity: 'light' };
+  return null;
+}
+
+export function normalizeWeatherInput(input: WeatherInput): WeatherConfig {
+  if (input.thunderstorm) {
+    return {
+      condition: 'storm',
+      intensity: normalizeIntensity(input.precipitationIntensity),
+      ...(input.time ? { time: input.time } : {}),
+    };
+  }
+
+  if (input.precipitationType && input.precipitationType !== 'none') {
+    const precipitationConditions: Condition[] = ['rain', 'drizzle', 'snow', 'sleet', 'hail'];
+    const condition = precipitationConditions.includes(input.precipitationType as Condition)
+      ? input.precipitationType as Condition
+      : null;
+    if (condition) {
+      return {
+        condition,
+        intensity: normalizeIntensity(input.precipitationIntensity),
+        ...(input.time ? { time: input.time } : {}),
+      };
+    }
+  }
+
+  const visibility = conditionFromVisibility(input.visibility);
+  if (visibility) {
+    return {
+      condition: visibility.condition,
+      intensity: visibility.intensity,
+      ...(input.time ? { time: input.time } : {}),
+    };
+  }
+
+  if (typeof input.cloudCover === 'number' && Number.isFinite(input.cloudCover)) {
+    const cloudCover = Math.max(0, Math.min(100, input.cloudCover));
+    if (cloudCover >= 90) {
+      return { condition: 'overcast', intensity: 'heavy', ...(input.time ? { time: input.time } : {}) };
+    }
+    if (cloudCover >= 15) {
+      return { condition: 'cloudy', intensity: cloudCoverIntensity(cloudCover), ...(input.time ? { time: input.time } : {}) };
+    }
+  }
+
+  if (typeof input.windSpeed === 'number' && Number.isFinite(input.windSpeed) && input.windSpeed >= 12) {
+    return {
+      condition: 'wind',
+      intensity: windIntensity(input.windSpeed),
+      ...(input.time ? { time: input.time } : {}),
+    };
+  }
+
+  const phenomenon = conditionFromPhenomenon(input.phenomenon);
+  if (phenomenon) {
+    return {
+      condition: phenomenon,
+      intensity: intensityFromPhenomenon(input.phenomenon)
+        ?? (typeof input.cloudCover === 'number' ? cloudCoverIntensity(input.cloudCover) : normalizeIntensity(input.precipitationIntensity)),
+      ...(input.time ? { time: input.time } : {}),
+    };
+  }
+
+  return {
+    condition: 'clear',
+    intensity: typeof input.cloudCover === 'number' ? cloudCoverIntensity(Math.max(0, Math.min(100, input.cloudCover))) : 'medium',
+    ...(input.time ? { time: input.time } : {}),
   };
 }

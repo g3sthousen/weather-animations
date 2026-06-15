@@ -17,8 +17,14 @@ function cloudColor(config: ResolvedConfig, alpha: number): string {
   if (config.condition === 'hail') {
     return config.time === 'night' ? `rgba(40,52,50,${alpha})` : `rgba(70,86,82,${alpha})`;
   }
-  if (config.condition === 'rain') {
+  if (config.condition === 'sleet') {
+    return config.time === 'night' ? `rgba(62,78,88,${alpha})` : `rgba(126,140,148,${alpha})`;
+  }
+  if (config.condition === 'rain' || config.condition === 'drizzle') {
     return config.time === 'night' ? `rgba(58,74,90,${alpha})` : `rgba(106,122,138,${alpha})`;
+  }
+  if (config.condition === 'overcast') {
+    return config.time === 'night' ? `rgba(52,62,74,${alpha})` : `rgba(178,186,194,${alpha})`;
   }
   if (config.time === 'night') return `rgba(58,74,106,${alpha})`;
   return `rgba(208,216,224,${alpha})`;
@@ -27,7 +33,10 @@ function cloudColor(config: ResolvedConfig, alpha: number): string {
 function cloudAlpha(config: ResolvedConfig, layer: 0 | 1 | 2): number {
   const base = config.condition === 'storm' ? 0.9
     : config.condition === 'hail' ? 0.85
+    : config.condition === 'sleet' ? 0.78
     : config.condition === 'rain' ? 0.75
+    : config.condition === 'drizzle' ? 0.58
+    : config.condition === 'overcast' ? 0.94
     : config.condition === 'wind' ? 0.58
     : config.condition === 'cloudy' ? 0.7
     : 0.5;
@@ -35,7 +44,7 @@ function cloudAlpha(config: ResolvedConfig, layer: 0 | 1 | 2): number {
 }
 
 function shouldShowClouds(condition: string): boolean {
-  return condition !== 'clear' && condition !== 'fog';
+  return condition !== 'clear' && condition !== 'fog' && condition !== 'mist' && condition !== 'haze';
 }
 
 function generateLobes(width: number, height: number, flat: boolean): CloudLobe[] {
@@ -118,6 +127,29 @@ export function initClouds(config: ResolvedConfig, width: number, height: number
         layer,
         lobes: generateLobes(w, h, random() < 0.45),
       });
+    }
+    return blobs;
+  }
+
+  if (config.condition === 'overcast') {
+    const overcastCounts: [number, number, number] = [7, 8, 9];
+    for (const layer of [0, 1, 2] as const) {
+      const count = Math.max(4, Math.round(overcastCounts[layer] * countMul));
+      const layerScale = 1 + layer * 0.25;
+      for (let i = 0; i < count; i++) {
+        const w = width * (0.32 + random() * 0.18) * layerScale;
+        const h = height * (0.11 + random() * 0.07) * layerScale;
+        blobs.push({
+          x: (i / count) * width * 1.35 - width * 0.2 + (random() - 0.5) * width * 0.08,
+          y: height * (0.02 + layer * 0.13 + random() * 0.06),
+          width: w,
+          height: h,
+          alpha: cloudAlpha(config, layer),
+          speed: LAYER_SPEEDS[layer] * width * 0.75,
+          layer,
+          lobes: generateLobes(w, h, true),
+        });
+      }
     }
     return blobs;
   }
@@ -262,7 +294,12 @@ function buildSprite(b: CloudBlob, config: ResolvedConfig): OffscreenCanvas {
   // Vertical form shading, clipped to the cloud body: lit top, shaded base.
   c.globalCompositeOperation = 'source-atop';
   const day = config.time === 'day';
-  const darkBase = config.condition === 'rain' || config.condition === 'storm' || config.condition === 'hail';
+  const darkBase = config.condition === 'rain'
+    || config.condition === 'drizzle'
+    || config.condition === 'storm'
+    || config.condition === 'hail'
+    || config.condition === 'sleet'
+    || config.condition === 'overcast';
   const topLight = day ? 'rgba(255,244,214,0.22)' : 'rgba(190,205,235,0.10)';
   const baseShade = darkBase ? 'rgba(0,0,0,0.35)' : day ? 'rgba(0,0,0,0.16)' : 'rgba(0,0,0,0.28)';
   const shade = c.createLinearGradient(0, ly - ry * 1.1, 0, ly + ry * 1.1);

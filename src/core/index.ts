@@ -3,8 +3,20 @@ import { resolveConfig } from './types';
 import { createEngineState, startTransition, tickEngine, renderEngine } from './engine';
 import type { EngineState } from './engine';
 
-export { isCelestialEventVisible, isFidelityEffective } from './types';
-export type { WeatherConfig, Condition, Intensity, TimeOfDay, Fidelity, MoonPhase, CelestialEvent } from './types';
+export { isCelestialEventVisible, isFidelityEffective, normalizeWeatherInput } from './types';
+export type {
+  WeatherConfig,
+  WeatherInput,
+  WeatherInputPhenomenon,
+  WeatherInputPrecipitationType,
+  WeatherInputVisibility,
+  Condition,
+  Intensity,
+  TimeOfDay,
+  Fidelity,
+  MoonPhase,
+  CelestialEvent,
+} from './types';
 
 export class WeatherScene {
   private destroyed = false;

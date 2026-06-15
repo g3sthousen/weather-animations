@@ -23,3 +23,4 @@ export { default as HailLightIcon } from './hail-light.svg?react';
 export { default as HailMediumIcon } from './hail-medium.svg?react';
 export { default as HailHeavyIcon } from './hail-heavy.svg?react';
 export { getIconName } from './helpers';
+export type { IconCondition } from './helpers';

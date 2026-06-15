@@ -2,7 +2,8 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { getIconName } from '../../src/icons/helpers';
-import type { Condition, Intensity } from '../../src/core/types';
+import type { Intensity } from '../../src/core/types';
+import type { IconCondition } from '../../src/icons/helpers';
 
 describe('getIconName', () => {
   it('returns condition-intensity string', () => {
@@ -12,7 +13,7 @@ describe('getIconName', () => {
   });
 
   it('covers all 24 combinations without error', () => {
-    const conditions: Condition[] = ['clear', 'cloudy', 'rain', 'snow', 'storm', 'fog', 'wind', 'hail'];
+    const conditions: IconCondition[] = ['clear', 'cloudy', 'rain', 'snow', 'storm', 'fog', 'wind', 'hail'];
     const intensities: Intensity[] = ['light', 'medium', 'heavy'];
     for (const c of conditions) {
       for (const i of intensities) {
@@ -22,7 +23,7 @@ describe('getIconName', () => {
   });
 });
 
-const iconConditions: Condition[] = ['clear', 'cloudy', 'rain', 'snow', 'storm', 'fog', 'wind', 'hail'];
+const iconConditions: IconCondition[] = ['clear', 'cloudy', 'rain', 'snow', 'storm', 'fog', 'wind', 'hail'];
 const iconIntensities: Intensity[] = ['light', 'medium', 'heavy'];
 const iconsDir = join(process.cwd(), 'src/icons');
 

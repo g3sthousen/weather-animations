@@ -22,10 +22,35 @@ let activeCelestialEvent: CelestialEvent = (params.get('celestialEvent') as Cele
 let activeCelestialProgress = Number(params.get('celestialProgress') ?? 0.5);
 if (!Number.isFinite(activeCelestialProgress)) activeCelestialProgress = 0.5;
 
-const CONDITIONS: Condition[] = ['clear', 'cloudy', 'rain', 'snow', 'storm', 'fog', 'wind', 'hail'];
+const CONDITIONS: Condition[] = [
+  'clear',
+  'cloudy',
+  'overcast',
+  'rain',
+  'drizzle',
+  'sleet',
+  'snow',
+  'storm',
+  'fog',
+  'mist',
+  'haze',
+  'wind',
+  'hail',
+];
 const CONDITION_LABELS: Record<Condition, string> = {
-  clear: 'Clear', cloudy: 'Cloudy', rain: 'Rain',
-  snow: 'Snow', storm: 'Storm', fog: 'Fog', wind: 'Wind', hail: 'Hail',
+  clear: 'Clear',
+  cloudy: 'Cloudy',
+  overcast: 'Overcast',
+  rain: 'Rain',
+  drizzle: 'Drizzle',
+  sleet: 'Sleet',
+  snow: 'Snow',
+  storm: 'Storm',
+  fog: 'Fog',
+  mist: 'Mist',
+  haze: 'Haze',
+  wind: 'Wind',
+  hail: 'Hail',
 };
 const MOON_PHASES: MoonPhase[] = [
   'new',
@@ -57,6 +82,19 @@ const CELESTIAL_EVENT_LABELS: Record<CelestialEvent, string> = {
 };
 const CELESTIAL_PROGRESS_STEPS = [0, 0.25, 0.5, 0.75, 1] as const;
 
+function isMoonEvent(event: CelestialEvent): boolean {
+  return event === 'moonrise' || event === 'moonset';
+}
+
+function intensityLabel(intensity: Intensity): string {
+  if (activeCondition === 'cloudy') {
+    if (intensity === 'light') return 'Partly';
+    if (intensity === 'medium') return 'Mostly';
+    return 'Dense';
+  }
+  return intensity.charAt(0).toUpperCase() + intensity.slice(1);
+}
+
 function isActiveCelestialEventVisible(event: CelestialEvent): boolean {
   return isCelestialEventVisible(event, {
     condition: activeCondition,
@@ -75,6 +113,13 @@ function normalizeActiveFidelity() {
   if (!isFidelityEffective({ condition: activeCondition })) {
     activeFidelity = 'subtle';
   }
+}
+
+function isMoonVisible(): boolean {
+  if (activeTime !== 'night') return false;
+  if (isMoonEvent(activeCelestialEvent) && isActiveCelestialEventVisible(activeCelestialEvent)) return true;
+  return activeCondition === 'clear'
+    || (activeCondition === 'cloudy' && activeIntensity !== 'heavy');
 }
 
 function render() {
@@ -124,7 +169,7 @@ function buildControls() {
   intRow.className = 'btn-row';
   for (const i of ['light', 'medium', 'heavy'] as Intensity[]) {
     const btn = document.createElement('button');
-    btn.textContent = i.charAt(0).toUpperCase() + i.slice(1);
+    btn.textContent = intensityLabel(i);
     if (i === activeIntensity) btn.classList.add('active');
     btn.addEventListener('click', () => { activeIntensity = i; normalizeActiveCelestialEvent(); buildControls(); render(); });
     intRow.appendChild(btn);
@@ -149,11 +194,18 @@ function buildControls() {
 
   const moonRow = document.createElement('div');
   moonRow.className = 'btn-row moon-row';
+  const moonEnabled = isMoonVisible();
   for (const phase of MOON_PHASES) {
     const btn = document.createElement('button');
     btn.textContent = MOON_PHASE_LABELS[phase];
+    btn.disabled = !moonEnabled;
     if (phase === activeMoonPhase) btn.classList.add('active');
-    btn.addEventListener('click', () => { activeMoonPhase = phase; buildControls(); render(); });
+    btn.addEventListener('click', () => {
+      if (!moonEnabled) return;
+      activeMoonPhase = phase;
+      buildControls();
+      render();
+    });
     moonRow.appendChild(btn);
   }
 

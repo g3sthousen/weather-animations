@@ -12,7 +12,7 @@ Live demo: [g3sthousen.github.io/weather-animations](https://g3sthousen.github.i
 
 ## Features
 
-- Animated weather states for clear, cloudy, rain, snow, storm, fog, wind, and hail.
+- Animated weather states for clear, cloudy, overcast, rain, drizzle, sleet, snow, storm, fog, mist, haze, wind, and hail.
 - Light, medium, and heavy intensity variants.
 - Day and night rendering with condition-specific sky palettes.
 - Subtle/rich fidelity modes for states with extra visual detail.
@@ -106,7 +106,7 @@ export function App() {
 
 ## Weather Icons
 
-The icon subpackage provides 24 duotone SVG icons: 8 weather conditions times 3 intensities.
+The icon subpackage provides 24 duotone SVG icons: 8 icon-supported weather conditions times 3 intensities.
 
 React components:
 
@@ -138,11 +138,13 @@ const iconPath = require.resolve('weather-animations/icons/rain-heavy.svg');
 
 Icon components use standard SVG props such as `width`, `height`, `className`, `style`, and ARIA attributes. Colors can be themed with `--wi-primary` and `--wi-accent`.
 
+Icons currently cover `clear`, `cloudy`, `rain`, `snow`, `storm`, `fog`, `wind`, and `hail`. Newer render-only conditions such as `drizzle`, `overcast`, `mist`, `haze`, and `sleet` can be mapped to nearby icons by the host app until dedicated icons are added.
+
 ## Configuration
 
 | Option | Values | Default |
 | --- | --- | --- |
-| `condition` | `clear`, `cloudy`, `rain`, `snow`, `storm`, `fog`, `wind`, `hail` | Required |
+| `condition` | `clear`, `cloudy`, `overcast`, `rain`, `drizzle`, `sleet`, `snow`, `storm`, `fog`, `mist`, `haze`, `wind`, `hail` | Required |
 | `intensity` | `light`, `medium`, `heavy` | `medium` |
 | `time` | `day`, `night` | `day` |
 | `fidelity` | `subtle`, `rich` | `subtle` |
@@ -153,18 +155,36 @@ Icon components use standard SVG props such as `width`, `height`, `className`, `
 
 Celestial events are normalized by the core renderer. Sunrise and sunset are only shown during day states; moonrise and moonset are only shown during night states. Events are available for clear, wind, and light/medium cloudy skies.
 
+For `cloudy`, intensity maps to cloud-cover language: `light` is partly cloudy, `medium` is mostly cloudy, and `heavy` is dense cloudy. Use `overcast` for a fully covered sky.
+
 The demo disables the fidelity switch for conditions where `rich` has no meaningful visual effect.
 
 ## Weather API Mapping
 
 The public API is intentionally small so it can be mapped from most weather providers:
 
-- Map provider weather codes to one of the supported `condition` values.
+- Map provider weather codes to one of the supported `condition` values, or use `normalizeWeatherInput()` with neutral weather fields.
 - Map precipitation, cloud cover, wind speed, or provider severity to `light`, `medium`, or `heavy`.
+- For cloud cover, prefer `cloudy/light` for partly cloudy, `cloudy/medium` for mostly cloudy, `cloudy/heavy` for dense cloudy, and `overcast` for a closed cloud deck.
 - Map local sunrise/sunset and current time to `time` and optional `celestialEvent`.
 - Use provider moon phase data for `moonPhase` when available.
 
-Keep provider-specific logic outside the renderer, then pass the normalized result into `WeatherScene.set()` or `WeatherBackground`.
+Provider-neutral helper:
+
+```ts
+import { normalizeWeatherInput, WeatherScene } from 'weather-animations';
+
+const config = normalizeWeatherInput({
+  precipitationType: 'sleet',
+  precipitationIntensity: 0.8,
+  cloudCover: 100,
+  time: 'night',
+});
+
+new WeatherScene(container).set(config);
+```
+
+Keep provider-specific code tables outside the renderer, then pass the normalized result into `WeatherScene.set()` or `WeatherBackground`.
 
 ## Development
 
