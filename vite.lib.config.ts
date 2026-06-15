@@ -17,9 +17,9 @@ export default defineConfig({
     emptyOutDir: entry === 'core',
     lib: {
       entry: entryFile,
-      formats: ['es', 'umd'],
+      formats: ['es', 'cjs'],
       name: 'WeatherAnimations',
-      fileName: (format) => `${entry}.${format === 'es' ? 'esm' : 'umd'}.js`,
+      fileName: (format) => `${entry}.${format === 'es' ? 'esm.js' : 'cjs'}`,
     },
     rollupOptions: {
       external: ['react', 'react/jsx-runtime'],

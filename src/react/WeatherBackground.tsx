@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { WeatherScene } from '../core/index';
 import type { WeatherConfig } from '../core/index';
+import type { CSSProperties } from 'react';
 
 export interface WeatherBackgroundProps extends WeatherConfig {
   className?: string;
-  style?: React.CSSProperties;
+  style?: CSSProperties;
 }
 
 export function WeatherBackground({

@@ -1,28 +1,62 @@
 {
   "name": "weather-animations",
   "version": "0.1.0",
-  "private": true,
+  "description": "Canvas-powered TypeScript weather backgrounds with React support and duotone weather icons.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/g3sthousen/weather-animations.git"
+  },
+  "bugs": {
+    "url": "https://github.com/g3sthousen/weather-animations/issues"
+  },
+  "homepage": "https://github.com/g3sthousen/weather-animations#readme",
+  "keywords": [
+    "weather",
+    "animation",
+    "canvas",
+    "react",
+    "icons",
+    "typescript"
+  ],
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/core.cjs",
+  "module": "./dist/core.esm.js",
+  "types": "./dist/types/core/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/types/core/index.d.ts",
       "import": "./dist/core.esm.js",
-      "require": "./dist/core.umd.js"
+      "require": "./dist/core.cjs"
     },
     "./react": {
+      "types": "./dist/types/react/WeatherBackground.d.ts",
       "import": "./dist/react.esm.js",
-      "require": "./dist/react.umd.js"
+      "require": "./dist/react.cjs"
     },
     "./icons/*": "./dist/icons/*",
     "./react-icons": {
+      "types": "./dist/icons.d.ts",
       "import": "./dist/icons.esm.js",
-      "require": "./dist/icons.umd.js",
-      "types": "./dist/icons.d.ts"
+      "require": "./dist/icons.cjs"
     }
   },
   "scripts": {
     "dev": "vite",
     "build:lib": "LIB_ENTRY=core vite build --config vite.lib.config.ts && LIB_ENTRY=react vite build --config vite.lib.config.ts",
     "build:icons": "vite build --config vite.icons.config.ts && node scripts/copy-icons.mjs",
-    "build": "npm run build:lib && npm run build:icons",
+    "build:types": "tsc --project tsconfig.types.json",
+    "build": "npm run build:lib && npm run build:icons && npm run build:types",
+    "prepack": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:visual": "playwright test"

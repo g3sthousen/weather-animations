@@ -14,9 +14,9 @@ export default defineConfig({
     outDir: 'dist',
     lib: {
       entry: resolve(__dirname, 'src/icons/index.ts'),
-      formats: ['es', 'umd'],
+      formats: ['es', 'cjs'],
       name: 'WeatherAnimationsIcons',
-      fileName: (format) => `icons.${format === 'es' ? 'esm' : 'umd'}.js`,
+      fileName: (format) => `icons.${format === 'es' ? 'esm.js' : 'cjs'}`,
     },
     rollupOptions: {
       external: ['react', 'react/jsx-runtime'],
