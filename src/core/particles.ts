@@ -116,6 +116,11 @@ export function windGustSpeedMultiplier(intensity: ResolvedConfig['intensity']):
   return WIND_GUST_SPEED_MULTIPLIER[intensity];
 }
 
+export function showerBurstFactor(time: number): number {
+  const wave = Math.max(0, Math.sin(time * 1.7) + Math.sin(time * 4.1) * 0.25);
+  return 0.18 + wave * wave * 1.15;
+}
+
 // --- Particle System ---
 
 const POOL_SIZE = 900;
@@ -181,7 +186,17 @@ export class ParticleSystem {
       if (cfg.condition === 'snow' || (cfg.condition === 'sleet' && p.length === 0)) {
         p.vx = Math.sin(p.phase * 0.8) * 18;
       }
-      if (cfg.condition === 'rain' || cfg.condition === 'drizzle' || (cfg.condition === 'sleet' && p.length > 0)) {
+      if (cfg.condition === 'flurries') {
+        p.vx = Math.sin(p.phase * 0.9 + p.depth * 3) * 26 + gust * depthFactor(p.depth, 0.35, 0.65);
+      }
+      if (cfg.condition === 'blizzard') {
+        p.vx = (-135 + Math.sin(p.phase * 1.4 + p.depth * 4) * 22) * depthFactor(p.depth, 0.65, 1);
+      }
+      if (cfg.condition === 'rain'
+        || cfg.condition === 'drizzle'
+        || cfg.condition === 'showers'
+        || cfg.condition === 'freezing-rain'
+        || (cfg.condition === 'sleet' && p.length > 0)) {
         p.vx = gust * depthFactor(p.depth, 0.6, 1);
       }
       if (cfg.condition === 'clear' && cfg.time === 'night') {
@@ -196,7 +211,7 @@ export class ParticleSystem {
       }
 
       // Rain/storm impact → splash at the bottom edge (intensity-gated; rich = more, bigger).
-      if ((cfg.condition === 'rain' || cfg.condition === 'storm') && p.kind === 'primary' && p.y > h && rainSplashes(cfg.intensity)) {
+      if ((cfg.condition === 'rain' || cfg.condition === 'storm' || cfg.condition === 'showers') && p.kind === 'primary' && p.y > h && rainSplashes(cfg.intensity)) {
         const threshold = rich ? 0.3 : 0.6;
         if (p.depth > threshold) {
           spawnSplash(this.pool, p.x, h, rich, cfg.intensity);
@@ -234,8 +249,12 @@ export class ParticleSystem {
     const rates: Partial<Record<string, number>> = {
       rain: 120 * scale,
       drizzle: 54 * scale,
+      showers: 132 * scale * showerBurstFactor(this.time),
+      'freezing-rain': 100 * scale,
       'storm-rain': 280 * scale,
       snow: 30 * scale,
+      flurries: 13 * scale,
+      blizzard: 150 * scale,
       sleet: 120 * scale,
       wind: 36 * scale,
       hail: 90 * scale,
@@ -249,8 +268,12 @@ export class ParticleSystem {
         this.spawnAccum -= 1;
         if (cfg.condition === 'rain') spawnRain(this.pool, w);
         else if (cfg.condition === 'drizzle') spawnDrizzle(this.pool, w);
+        else if (cfg.condition === 'showers') spawnShowers(this.pool, w);
+        else if (cfg.condition === 'freezing-rain') spawnFreezingRain(this.pool, w);
         else if (cfg.condition === 'storm') spawnStormRain(this.pool, w);
         else if (cfg.condition === 'snow') spawnSnow(this.pool, w);
+        else if (cfg.condition === 'flurries') spawnFlurry(this.pool, w);
+        else if (cfg.condition === 'blizzard') spawnBlizzard(this.pool, w);
         else if (cfg.condition === 'sleet') spawnSleet(this.pool, w);
         else if (cfg.condition === 'wind') spawnWind(this.pool, w, h, rich, cfg.intensity);
         else if (cfg.condition === 'hail') spawnHail(this.pool, w);
@@ -311,20 +334,29 @@ function drawParticle(ctx: CanvasRenderingContext2D, p: Particle, cfg: ResolvedC
   if (cfg.condition === 'rain'
     || cfg.condition === 'storm'
     || cfg.condition === 'drizzle'
+    || cfg.condition === 'showers'
+    || cfg.condition === 'freezing-rain'
     || (cfg.condition === 'sleet' && p.length > 0)) {
     ctx.strokeStyle = cfg.condition === 'storm'
       ? 'rgba(180,200,220,0.8)'
+      : cfg.condition === 'freezing-rain'
+        ? 'rgba(215,238,245,0.78)'
+        : cfg.condition === 'showers'
+          ? 'rgba(155,190,220,0.68)'
       : cfg.condition === 'sleet'
         ? 'rgba(190,210,222,0.72)'
         : cfg.condition === 'drizzle'
           ? 'rgba(175,198,215,0.48)'
           : 'rgba(160,190,220,0.7)';
-    ctx.lineWidth = cfg.condition === 'storm' ? 1.5 : cfg.condition === 'drizzle' ? 0.75 : 1;
+    ctx.lineWidth = cfg.condition === 'storm' ? 1.5 : cfg.condition === 'drizzle' ? 0.75 : cfg.condition === 'freezing-rain' ? 0.8 : 1;
     ctx.beginPath();
     ctx.moveTo(p.x, p.y);
     ctx.lineTo(p.x + p.vx * 0.04, p.y + p.length);
     ctx.stroke();
-  } else if (cfg.condition === 'snow' || (cfg.condition === 'sleet' && p.length === 0)) {
+  } else if (cfg.condition === 'snow'
+    || cfg.condition === 'flurries'
+    || cfg.condition === 'blizzard'
+    || (cfg.condition === 'sleet' && p.length === 0)) {
     if (p.depth < 0.5) {
       const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
       g.addColorStop(0, `rgba(255,255,255,${p.alpha})`);
@@ -463,6 +495,40 @@ function spawnStormRain(pool: ParticlePool, w: number): void {
   p.kind = 'primary';
 }
 
+function spawnShowers(pool: ParticlePool, w: number): void {
+  const p = pool.spawn();
+  if (!p) return;
+  const depth = random();
+  p.x = random() * (w + 120) - 60;
+  p.y = -10;
+  p.vx = -22 * depthFactor(depth, 0.6, 1);
+  p.vy = (680 + random() * 230) * depthFactor(depth, 0.55, 1);
+  p.alpha = (0.42 + random() * 0.34) * depthFactor(depth, 0.5, 1);
+  p.size = 1;
+  p.length = (16 + random() * 10) * depthFactor(depth, 0.55, 1);
+  p.phase = 0;
+  p.depth = depth;
+  p.bounces = 0;
+  p.kind = 'primary';
+}
+
+function spawnFreezingRain(pool: ParticlePool, w: number): void {
+  const p = pool.spawn();
+  if (!p) return;
+  const depth = random();
+  p.x = random() * (w + 90) - 45;
+  p.y = -10;
+  p.vx = -14 * depthFactor(depth, 0.55, 1);
+  p.vy = (610 + random() * 170) * depthFactor(depth, 0.55, 1);
+  p.alpha = (0.45 + random() * 0.28) * depthFactor(depth, 0.82, 1);
+  p.size = 0.8;
+  p.length = (8 + random() * 8) * depthFactor(depth, 0.65, 1);
+  p.phase = 0;
+  p.depth = depth;
+  p.bounces = 0;
+  p.kind = 'primary';
+}
+
 function spawnSnow(pool: ParticlePool, w: number): void {
   const p = pool.spawn();
   if (!p) return;
@@ -473,6 +539,40 @@ function spawnSnow(pool: ParticlePool, w: number): void {
   p.vy = (40 + random() * 50) * depthFactor(depth, 0.5, 1);
   p.alpha = (0.6 + random() * 0.4) * depthFactor(depth, 0.5, 1);
   p.size = (1.5 + random() * 3) * depthFactor(depth, 0.5, 1);
+  p.length = 0;
+  p.phase = random() * Math.PI * 2;
+  p.depth = depth;
+  p.bounces = 0;
+  p.kind = 'primary';
+}
+
+function spawnFlurry(pool: ParticlePool, w: number): void {
+  const p = pool.spawn();
+  if (!p) return;
+  const depth = random();
+  p.x = random() * w;
+  p.y = -10;
+  p.vx = (random() - 0.5) * 60;
+  p.vy = (28 + random() * 46) * depthFactor(depth, 0.5, 1);
+  p.alpha = (0.45 + random() * 0.35) * depthFactor(depth, 0.55, 1);
+  p.size = (1 + random() * 2.2) * depthFactor(depth, 0.55, 1);
+  p.length = 0;
+  p.phase = random() * Math.PI * 2;
+  p.depth = depth;
+  p.bounces = 0;
+  p.kind = 'primary';
+}
+
+function spawnBlizzard(pool: ParticlePool, w: number): void {
+  const p = pool.spawn();
+  if (!p) return;
+  const depth = random();
+  p.x = random() * (w + 260) + 80;
+  p.y = random() * 80 - 20;
+  p.vx = (-145 - random() * 80) * depthFactor(depth, 0.65, 1);
+  p.vy = (95 + random() * 120) * depthFactor(depth, 0.55, 1);
+  p.alpha = (0.45 + random() * 0.4) * depthFactor(depth, 0.55, 1);
+  p.size = (0.8 + random() * 1.7) * depthFactor(depth, 0.55, 1);
   p.length = 0;
   p.phase = random() * Math.PI * 2;
   p.depth = depth;

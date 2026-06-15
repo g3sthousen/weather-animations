@@ -11,7 +11,7 @@ describe('hail condition', () => {
 });
 
 describe('expanded weather conditions', () => {
-  const expanded = ['drizzle', 'overcast', 'mist', 'haze', 'sleet'] as const;
+  const expanded = ['drizzle', 'overcast', 'mist', 'haze', 'smoke', 'sleet', 'showers', 'freezing-rain', 'flurries', 'blizzard', 'dust'] as const;
 
   it('exports new conditions as valid renderer conditions', () => {
     for (const condition of expanded) {
@@ -44,10 +44,12 @@ describe('isFidelityEffective', () => {
     expect(isFidelityEffective({ condition: 'overcast' })).toBe(false);
     expect(isFidelityEffective({ condition: 'mist' })).toBe(false);
     expect(isFidelityEffective({ condition: 'haze' })).toBe(false);
+    expect(isFidelityEffective({ condition: 'smoke' })).toBe(false);
+    expect(isFidelityEffective({ condition: 'dust' })).toBe(false);
   });
 
   it('is on for conditions with extra detail or particle behavior', () => {
-    for (const condition of ['clear', 'rain', 'snow', 'storm', 'wind', 'hail', 'drizzle', 'sleet'] as const) {
+    for (const condition of ['clear', 'rain', 'snow', 'storm', 'wind', 'hail', 'drizzle', 'sleet', 'showers', 'freezing-rain', 'flurries', 'blizzard'] as const) {
       expect(isFidelityEffective({ condition })).toBe(true);
     }
   });
@@ -179,7 +181,17 @@ describe('normalizeWeatherInput', () => {
     expect(normalizeWeatherInput({ thunderstorm: true, precipitationIntensity: 0.5 })).toEqual({ condition: 'storm', intensity: 'medium' });
     expect(normalizeWeatherInput({ visibility: 'mist' })).toEqual({ condition: 'mist', intensity: 'medium' });
     expect(normalizeWeatherInput({ visibility: 'haze' })).toEqual({ condition: 'haze', intensity: 'medium' });
+    expect(normalizeWeatherInput({ visibility: 'smoke' })).toEqual({ condition: 'smoke', intensity: 'medium' });
+    expect(normalizeWeatherInput({ visibility: 'dust' })).toEqual({ condition: 'dust', intensity: 'medium' });
     expect(normalizeWeatherInput({ visibility: 800 })).toEqual({ condition: 'fog', intensity: 'heavy' });
+  });
+
+  it('maps additional precipitation and phenomenon states', () => {
+    expect(normalizeWeatherInput({ precipitationType: 'freezing-rain', precipitationIntensity: 0.7 })).toEqual({ condition: 'freezing-rain', intensity: 'heavy' });
+    expect(normalizeWeatherInput({ phenomenon: 'showers', precipitationIntensity: 'medium' })).toEqual({ condition: 'showers', intensity: 'medium' });
+    expect(normalizeWeatherInput({ phenomenon: 'flurries' })).toEqual({ condition: 'flurries', intensity: 'medium' });
+    expect(normalizeWeatherInput({ phenomenon: 'blizzard', windSpeed: 60 })).toEqual({ condition: 'blizzard', intensity: 'medium' });
+    expect(normalizeWeatherInput({ phenomenon: 'dust' })).toEqual({ condition: 'dust', intensity: 'medium' });
   });
 
   it('maps clouds and wind when no stronger phenomenon is present', () => {

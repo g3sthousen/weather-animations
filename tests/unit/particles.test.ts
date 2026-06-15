@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ParticlePool, ParticleSystem, getFidelityScale, depthFactor, rainSplashes, splashRadius, splashAlpha, gustOffset, bounceVelocity, shouldStopBouncing, hailBounceConfig, windGustSpeedMultiplier } from '../../src/core/particles';
+import { ParticlePool, ParticleSystem, getFidelityScale, depthFactor, rainSplashes, splashRadius, splashAlpha, gustOffset, bounceVelocity, shouldStopBouncing, hailBounceConfig, windGustSpeedMultiplier, showerBurstFactor } from '../../src/core/particles';
 import { seedRng } from '../../src/core/rng';
 import { resolveConfig } from '../../src/core/types';
 
@@ -200,6 +200,11 @@ describe('wind particles', () => {
 });
 
 describe('expanded condition particles', () => {
+  it('varies shower density over time', () => {
+    expect(showerBurstFactor(0)).toBeLessThan(showerBurstFactor(0.9));
+    expect(showerBurstFactor(2.2)).toBeLessThan(showerBurstFactor(0.9));
+  });
+
   it('spawns drizzle as fewer and finer rain strokes', () => {
     seedRng(12345);
     const drizzle = new ParticleSystem();
@@ -232,5 +237,69 @@ describe('expanded condition particles', () => {
 
     expect(streaks.length).toBeGreaterThan(10);
     expect(pellets.length).toBeGreaterThan(5);
+  });
+
+  it('spawns showers as rain streaks with burstier coverage than steady rain', () => {
+    seedRng(12345);
+    const showers = new ParticleSystem();
+    showers.init(resolveConfig({ condition: 'showers', intensity: 'medium' }), 800, 400);
+    for (let i = 0; i < 20; i++) showers.update(0.1);
+
+    seedRng(12345);
+    const rain = new ParticleSystem();
+    rain.init(resolveConfig({ condition: 'rain', intensity: 'medium' }), 800, 400);
+    for (let i = 0; i < 20; i++) rain.update(0.1);
+
+    const showerParticles = (showers as any).pool.particles.filter((p: any) => p.active && p.kind === 'primary');
+    const rainParticles = (rain as any).pool.particles.filter((p: any) => p.active && p.kind === 'primary');
+
+    expect(showerParticles.length).toBeGreaterThan(20);
+    expect(showerParticles.length).toBeLessThan(rainParticles.length);
+    expect(Math.max(...showerParticles.map((p: any) => p.length))).toBeGreaterThan(18);
+  });
+
+  it('spawns freezing rain as bright short rain streaks', () => {
+    seedRng(12345);
+    const system = new ParticleSystem();
+    system.init(resolveConfig({ condition: 'freezing-rain', intensity: 'medium' }), 800, 400);
+    for (let i = 0; i < 20; i++) system.update(0.1);
+
+    const particles = (system as any).pool.particles.filter((p: any) => p.active && p.kind === 'primary');
+
+    expect(particles.length).toBeGreaterThan(30);
+    expect(Math.max(...particles.map((p: any) => p.length))).toBeLessThan(19);
+    expect(Math.min(...particles.map((p: any) => p.alpha))).toBeGreaterThan(0.35);
+  });
+
+  it('spawns flurries as sparse snow with more lateral drift than snow', () => {
+    seedRng(12345);
+    const flurries = new ParticleSystem();
+    flurries.init(resolveConfig({ condition: 'flurries', intensity: 'medium' }), 800, 400);
+    for (let i = 0; i < 20; i++) flurries.update(0.1);
+
+    seedRng(12345);
+    const snow = new ParticleSystem();
+    snow.init(resolveConfig({ condition: 'snow', intensity: 'medium' }), 800, 400);
+    for (let i = 0; i < 20; i++) snow.update(0.1);
+
+    const flurryParticles = (flurries as any).pool.particles.filter((p: any) => p.active && p.kind === 'primary');
+    const snowParticles = (snow as any).pool.particles.filter((p: any) => p.active && p.kind === 'primary');
+
+    expect(flurryParticles.length).toBeGreaterThan(4);
+    expect(flurryParticles.length).toBeLessThan(snowParticles.length);
+    expect(Math.max(...flurryParticles.map((p: any) => Math.abs(p.vx)))).toBeGreaterThan(20);
+  });
+
+  it('spawns blizzard particles as fast wind-driven snow', () => {
+    seedRng(12345);
+    const system = new ParticleSystem();
+    system.init(resolveConfig({ condition: 'blizzard', intensity: 'heavy' }), 800, 400);
+    for (let i = 0; i < 20; i++) system.update(0.1);
+
+    const particles = (system as any).pool.particles.filter((p: any) => p.active && p.kind === 'primary');
+
+    expect(particles.length).toBeGreaterThan(80);
+    expect(Math.min(...particles.map((p: any) => p.vx))).toBeLessThan(-120);
+    expect(Math.max(...particles.map((p: any) => p.size))).toBeLessThan(3.2);
   });
 });

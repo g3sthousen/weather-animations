@@ -95,6 +95,24 @@ function hazeStepY(config: ResolvedConfig): number {
   return 0.18;
 }
 
+function smokePlumeCount(config: ResolvedConfig): number {
+  if (config.intensity === 'light') return 3;
+  if (config.intensity === 'heavy') return 6;
+  return 4;
+}
+
+function smokeStepY(config: ResolvedConfig): number {
+  if (config.intensity === 'light') return 0.16;
+  if (config.intensity === 'heavy') return 0.12;
+  return 0.14;
+}
+
+function dustPlumeCount(config: ResolvedConfig): number {
+  if (config.intensity === 'light') return 3;
+  if (config.intensity === 'heavy') return 6;
+  return 4;
+}
+
 export function updateAtmosphere(state: AtmosphereState, config: ResolvedConfig, delta: number): void {
   state.time += delta;
 
@@ -128,17 +146,43 @@ export function updateAtmosphere(state: AtmosphereState, config: ResolvedConfig,
     state.boltBranches = null;
   }
 
-  if (config.condition === 'fog' || config.condition === 'mist' || config.condition === 'haze') {
+  if (config.condition === 'fog' || config.condition === 'mist' || config.condition === 'haze' || config.condition === 'smoke' || config.condition === 'dust') {
     const plumeKey = `${config.condition}:${config.intensity}`;
     if (!state.fogPlumes || state.fogPlumeKey !== plumeKey) {
-      const count = config.condition === 'fog' ? 4 : config.condition === 'mist' ? 2 : hazePlumeCount(config);
-      const startY = config.condition === 'haze' ? 0.25 : config.condition === 'mist' ? 0.18 : 0.45;
-      const stepY = config.condition === 'haze' ? hazeStepY(config) : config.condition === 'mist' ? 0.2 : 0.14;
+      const count = config.condition === 'fog'
+        ? 4
+        : config.condition === 'mist'
+          ? 2
+          : config.condition === 'smoke'
+            ? smokePlumeCount(config)
+            : config.condition === 'dust'
+              ? dustPlumeCount(config)
+              : hazePlumeCount(config);
+      const startY = config.condition === 'haze'
+        ? 0.25
+        : config.condition === 'mist'
+          ? 0.18
+          : config.condition === 'smoke'
+            ? 0.22
+            : config.condition === 'dust'
+              ? 0.18
+              : 0.45;
+      const stepY = config.condition === 'haze'
+        ? hazeStepY(config)
+        : config.condition === 'mist'
+          ? 0.2
+          : config.condition === 'smoke'
+            ? smokeStepY(config)
+            : config.condition === 'dust'
+              ? smokeStepY(config)
+              : 0.14;
       state.fogPlumes = Array.from({ length: count }, (_, i) => ({
         baseX: random(),
         baseY: startY + i * stepY + random() * 0.06,
-        speed: (config.condition === 'haze' ? 0.006 : 0.01) + random() * 0.02,
-        bobAmp: (config.condition === 'fog' ? 8 : config.condition === 'mist' ? 3 : 5) + random() * 10,
+        speed: (config.condition === 'haze' ? 0.006 : config.condition === 'smoke' ? 0.012 : config.condition === 'dust' ? 0.018 : 0.01)
+          + random() * (config.condition === 'smoke' || config.condition === 'dust' ? 0.028 : 0.02),
+        bobAmp: (config.condition === 'fog' ? 8 : config.condition === 'mist' ? 3 : config.condition === 'smoke' ? 7 : config.condition === 'dust' ? 9 : 5)
+          + random() * (config.condition === 'smoke' || config.condition === 'dust' ? 16 : 10),
         bobFreq: 0.15 + random() * 0.15,
         phase: random() * Math.PI * 2,
       }));
@@ -167,7 +211,7 @@ export function drawAtmosphere(
 
   drawCelestialEventOverlay(ctx, config, alpha, width, height);
 
-  if (config.condition === 'fog' || config.condition === 'mist' || config.condition === 'haze') {
+  if (config.condition === 'fog' || config.condition === 'mist' || config.condition === 'haze' || config.condition === 'smoke' || config.condition === 'dust') {
     drawFog(ctx, config, state, width, height);
   }
 
@@ -507,6 +551,10 @@ function buildPlumeSprite(radius: number, config: ResolvedConfig): OffscreenCanv
   const night = config.time === 'night';
   const rgb = config.condition === 'haze'
     ? night ? '118,106,120' : '218,198,158'
+    : config.condition === 'smoke'
+      ? night ? '70,66,66' : '126,112,98'
+      : config.condition === 'dust'
+        ? night ? '112,86,58' : '214,166,94'
     : config.condition === 'mist'
       ? night ? '112,124,136' : '225,232,235'
       : night ? '90,100,112' : '205,210,216';
@@ -515,8 +563,34 @@ function buildPlumeSprite(radius: number, config: ResolvedConfig): OffscreenCanv
     : config.intensity === 'heavy'
       ? { center: 0.34, mid: 0.16 }
       : { center: 0.22, mid: 0.1 };
-  const centerAlpha = config.condition === 'fog' ? 0.5 : config.condition === 'mist' ? 0.16 : hazeAlpha.center;
-  const midAlpha = config.condition === 'fog' ? 0.22 : config.condition === 'mist' ? 0.065 : hazeAlpha.mid;
+  const smokeAlpha = config.intensity === 'light'
+    ? { center: 0.16, mid: 0.07 }
+    : config.intensity === 'heavy'
+      ? { center: 0.42, mid: 0.2 }
+      : { center: 0.28, mid: 0.13 };
+  const dustAlpha = config.intensity === 'light'
+    ? { center: 0.13, mid: 0.06 }
+    : config.intensity === 'heavy'
+      ? { center: 0.38, mid: 0.18 }
+      : { center: 0.24, mid: 0.11 };
+  const centerAlpha = config.condition === 'fog'
+    ? 0.5
+    : config.condition === 'mist'
+      ? 0.16
+      : config.condition === 'smoke'
+        ? smokeAlpha.center
+        : config.condition === 'dust'
+          ? dustAlpha.center
+          : hazeAlpha.center;
+  const midAlpha = config.condition === 'fog'
+    ? 0.22
+    : config.condition === 'mist'
+      ? 0.065
+      : config.condition === 'smoke'
+        ? smokeAlpha.mid
+        : config.condition === 'dust'
+          ? dustAlpha.mid
+          : hazeAlpha.mid;
   const g = c.createRadialGradient(radius, radius, 0, radius, radius, radius);
   g.addColorStop(0, `rgba(${rgb},${centerAlpha})`);
   g.addColorStop(0.5, `rgba(${rgb},${midAlpha})`);
@@ -538,12 +612,32 @@ function drawFog(
   if (!state.fogPlumes) return;
   const hazeRadius = config.intensity === 'light' ? 0.36 : config.intensity === 'heavy' ? 0.58 : 0.46;
   const hazeOpacity = config.intensity === 'light' ? 0.28 : config.intensity === 'heavy' ? 0.72 : 0.5;
-  const radius = width * (config.condition === 'fog' ? 0.4 : config.condition === 'mist' ? 0.28 : hazeRadius);
-  const opacity = config.condition === 'fog' ? 1 : config.condition === 'mist' ? 0.42 : hazeOpacity;
+  const smokeRadius = config.intensity === 'light' ? 0.44 : config.intensity === 'heavy' ? 0.64 : 0.52;
+  const smokeOpacity = config.intensity === 'light' ? 0.36 : config.intensity === 'heavy' ? 0.82 : 0.58;
+  const dustRadius = config.intensity === 'light' ? 0.42 : config.intensity === 'heavy' ? 0.66 : 0.54;
+  const dustOpacity = config.intensity === 'light' ? 0.32 : config.intensity === 'heavy' ? 0.76 : 0.54;
+  const radius = width * (config.condition === 'fog'
+    ? 0.4
+    : config.condition === 'mist'
+      ? 0.28
+      : config.condition === 'smoke'
+        ? smokeRadius
+        : config.condition === 'dust'
+          ? dustRadius
+          : hazeRadius);
+  const opacity = config.condition === 'fog'
+    ? 1
+    : config.condition === 'mist'
+      ? 0.42
+      : config.condition === 'smoke'
+        ? smokeOpacity
+        : config.condition === 'dust'
+          ? dustOpacity
+          : hazeOpacity;
   ctx.save();
   ctx.globalAlpha *= opacity;
   for (const pl of state.fogPlumes) {
-    const key = `${config.condition}:${config.time}`;
+    const key = `${config.condition}:${config.time}:${config.intensity}`;
     if (!pl.sprite || pl.spriteR !== radius || pl.spriteKey !== key) {
       pl.sprite = buildPlumeSprite(radius, config);
       pl.spriteR = radius;

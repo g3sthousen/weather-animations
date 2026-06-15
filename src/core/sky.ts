@@ -33,8 +33,20 @@ const SKY_PALETTES: Record<PaletteKey, SkyPalette> = {
   'mist:night':   { top: hexToRgb('#303a46'), bottom: hexToRgb('#4a5560') },
   'haze:day':     { top: hexToRgb('#b7a98d'), bottom: hexToRgb('#e7d5b5') },
   'haze:night':   { top: hexToRgb('#323041'), bottom: hexToRgb('#50495c') },
+  'smoke:day':    { top: hexToRgb('#82776b'), bottom: hexToRgb('#b9aa99') },
+  'smoke:night':  { top: hexToRgb('#29282c'), bottom: hexToRgb('#46403f') },
   'sleet:day':    { top: hexToRgb('#778690'), bottom: hexToRgb('#c4d0d6') },
   'sleet:night':  { top: hexToRgb('#202832'), bottom: hexToRgb('#3a4652') },
+  'showers:day':  { top: hexToRgb('#5f7588'), bottom: hexToRgb('#a9bbc7') },
+  'showers:night': { top: hexToRgb('#1f2a38'), bottom: hexToRgb('#34465a') },
+  'freezing-rain:day': { top: hexToRgb('#6f8491'), bottom: hexToRgb('#c9d8dc') },
+  'freezing-rain:night': { top: hexToRgb('#1d2832'), bottom: hexToRgb('#3a4b56') },
+  'flurries:day': { top: hexToRgb('#a9bdc9'), bottom: hexToRgb('#e4edf1') },
+  'flurries:night': { top: hexToRgb('#222b44'), bottom: hexToRgb('#3b4664') },
+  'blizzard:day': { top: hexToRgb('#8799a5'), bottom: hexToRgb('#d6e1e6') },
+  'blizzard:night': { top: hexToRgb('#161d2a'), bottom: hexToRgb('#313a4a') },
+  'dust:day':     { top: hexToRgb('#b28f62'), bottom: hexToRgb('#dec18e') },
+  'dust:night':   { top: hexToRgb('#3b3028'), bottom: hexToRgb('#5b4937') },
 };
 
 function getPalette(config: ResolvedConfig): SkyPalette {

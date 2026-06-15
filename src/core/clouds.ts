@@ -17,10 +17,16 @@ function cloudColor(config: ResolvedConfig, alpha: number): string {
   if (config.condition === 'hail') {
     return config.time === 'night' ? `rgba(40,52,50,${alpha})` : `rgba(70,86,82,${alpha})`;
   }
-  if (config.condition === 'sleet') {
+  if (config.condition === 'blizzard') {
+    return config.time === 'night' ? `rgba(64,72,86,${alpha})` : `rgba(170,184,192,${alpha})`;
+  }
+  if (config.condition === 'sleet' || config.condition === 'freezing-rain') {
     return config.time === 'night' ? `rgba(62,78,88,${alpha})` : `rgba(126,140,148,${alpha})`;
   }
-  if (config.condition === 'rain' || config.condition === 'drizzle') {
+  if (config.condition === 'flurries') {
+    return config.time === 'night' ? `rgba(70,82,110,${alpha})` : `rgba(205,216,224,${alpha})`;
+  }
+  if (config.condition === 'rain' || config.condition === 'drizzle' || config.condition === 'showers') {
     return config.time === 'night' ? `rgba(58,74,90,${alpha})` : `rgba(106,122,138,${alpha})`;
   }
   if (config.condition === 'overcast') {
@@ -33,9 +39,13 @@ function cloudColor(config: ResolvedConfig, alpha: number): string {
 function cloudAlpha(config: ResolvedConfig, layer: 0 | 1 | 2): number {
   const base = config.condition === 'storm' ? 0.9
     : config.condition === 'hail' ? 0.85
+    : config.condition === 'blizzard' ? 0.9
     : config.condition === 'sleet' ? 0.78
+    : config.condition === 'freezing-rain' ? 0.8
     : config.condition === 'rain' ? 0.75
+    : config.condition === 'showers' ? 0.68
     : config.condition === 'drizzle' ? 0.58
+    : config.condition === 'flurries' ? 0.48
     : config.condition === 'overcast' ? 0.94
     : config.condition === 'wind' ? 0.58
     : config.condition === 'cloudy' ? 0.7
@@ -44,7 +54,12 @@ function cloudAlpha(config: ResolvedConfig, layer: 0 | 1 | 2): number {
 }
 
 function shouldShowClouds(condition: string): boolean {
-  return condition !== 'clear' && condition !== 'fog' && condition !== 'mist' && condition !== 'haze';
+  return condition !== 'clear'
+    && condition !== 'fog'
+    && condition !== 'mist'
+    && condition !== 'haze'
+    && condition !== 'smoke'
+    && condition !== 'dust';
 }
 
 function generateLobes(width: number, height: number, flat: boolean): CloudLobe[] {
@@ -84,7 +99,7 @@ export function initClouds(config: ResolvedConfig, width: number, height: number
   const blobs: CloudBlob[] = [];
   const countMul = INTENSITY_COUNT[config.intensity];
 
-  if (config.condition === 'storm') {
+  if (config.condition === 'storm' || config.condition === 'blizzard') {
     // Cumulonimbus: few massive towers, towering from top of sky downward.
     // Fewer, taller, narrower than regular cumulus — no flat stratus shapes.
     const stormCounts: [number, number, number] = [2, 2, 3];
@@ -92,15 +107,15 @@ export function initClouds(config: ResolvedConfig, width: number, height: number
       const count = Math.max(1, Math.round(stormCounts[layer] * countMul));
       const layerScale = 1 + layer * 0.4;
       for (let i = 0; i < count; i++) {
-        const w = width * (0.18 + random() * 0.14) * layerScale;
-        const h = height * (0.30 + random() * 0.20) * layerScale;
+        const w = width * (config.condition === 'blizzard' ? 0.24 + random() * 0.16 : 0.18 + random() * 0.14) * layerScale;
+        const h = height * (config.condition === 'blizzard' ? 0.18 + random() * 0.12 : 0.30 + random() * 0.20) * layerScale;
         blobs.push({
           x: (i / count) * width * 1.3 - width * 0.15,
           y: height * (layer * 0.07 + random() * 0.05) - h * 0.15,
           width: w,
           height: h,
           alpha: cloudAlpha(config, layer),
-          speed: LAYER_SPEEDS[layer] * width,
+          speed: LAYER_SPEEDS[layer] * width * (config.condition === 'blizzard' ? 1.7 : 1),
           layer,
           lobes: generateLobes(w, h, false),
         });
@@ -296,9 +311,12 @@ function buildSprite(b: CloudBlob, config: ResolvedConfig): OffscreenCanvas {
   const day = config.time === 'day';
   const darkBase = config.condition === 'rain'
     || config.condition === 'drizzle'
+    || config.condition === 'showers'
+    || config.condition === 'freezing-rain'
     || config.condition === 'storm'
     || config.condition === 'hail'
     || config.condition === 'sleet'
+    || config.condition === 'blizzard'
     || config.condition === 'overcast';
   const topLight = day ? 'rgba(255,244,214,0.22)' : 'rgba(190,205,235,0.10)';
   const baseShade = darkBase ? 'rgba(0,0,0,0.35)' : day ? 'rgba(0,0,0,0.16)' : 'rgba(0,0,0,0.28)';

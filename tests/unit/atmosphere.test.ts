@@ -62,6 +62,39 @@ describe('haze intensity', () => {
   });
 });
 
+describe('smoke intensity', () => {
+  it('uses denser plume coverage than haze and scales by intensity', () => {
+    const light = createAtmosphereState();
+    const heavy = createAtmosphereState();
+    const haze = createAtmosphereState();
+
+    updateAtmosphere(light, resolveConfig({ condition: 'smoke', intensity: 'light' }), 0);
+    updateAtmosphere(heavy, resolveConfig({ condition: 'smoke', intensity: 'heavy' }), 0);
+    updateAtmosphere(haze, resolveConfig({ condition: 'haze', intensity: 'medium' }), 0);
+
+    expect(light.fogPlumes?.length).toBe(3);
+    expect(heavy.fogPlumes?.length).toBe(6);
+    expect(heavy.fogPlumes?.length).toBeGreaterThan(haze.fogPlumes?.length ?? 0);
+    expect(Math.min(...(heavy.fogPlumes ?? []).map((plume) => plume.speed))).toBeGreaterThan(0.01);
+  });
+});
+
+describe('dust intensity', () => {
+  it('uses warm visibility plumes and scales coverage by intensity', () => {
+    const light = createAtmosphereState();
+    const heavy = createAtmosphereState();
+
+    updateAtmosphere(light, resolveConfig({ condition: 'dust', intensity: 'light' }), 0);
+    updateAtmosphere(heavy, resolveConfig({ condition: 'dust', intensity: 'heavy' }), 0);
+
+    expect(light.fogPlumes?.length).toBe(3);
+    expect(heavy.fogPlumes?.length).toBe(6);
+    const firstHeavy = heavy.fogPlumes?.[0];
+    expect(firstHeavy?.baseY).toBeGreaterThanOrEqual(0.18);
+    expect(firstHeavy?.speed).toBeGreaterThan(0.015);
+  });
+});
+
 describe('getCelestialOpacity', () => {
   it('lets cloudy light and medium show celestial bodies while heavy stays covered', () => {
     expect(getCelestialOpacity(resolveConfig({ condition: 'cloudy', intensity: 'light' }))).toBeCloseTo(0.45);

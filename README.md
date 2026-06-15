@@ -4,7 +4,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/weather-animations)](https://www.npmjs.com/package/weather-animations)
 [![license](https://img.shields.io/npm/l/weather-animations)](https://www.npmjs.com/package/weather-animations)
 
-Canvas-powered TypeScript weather backgrounds with smooth transitions, configurable intensity, day/night palettes, moon phases, and sunrise, sunset, moonrise, and moonset events.
+Canvas-powered JavaScript weather backgrounds with TypeScript types, smooth transitions, configurable intensity, day/night palettes, moon phases, and sunrise, sunset, moonrise, and moonset events.
 
 npm package: [weather-animations](https://www.npmjs.com/package/weather-animations)
 
@@ -12,13 +12,13 @@ Live demo: [g3sthousen.github.io/weather-animations](https://g3sthousen.github.i
 
 ## Features
 
-- Animated weather states for clear, cloudy, overcast, rain, drizzle, sleet, snow, storm, fog, mist, haze, wind, and hail.
+- Animated weather states for clear, cloudy, overcast, rain, drizzle, showers, freezing rain, sleet, snow, flurries, blizzard, storm, fog, mist, haze, smoke, dust, wind, and hail.
 - Light, medium, and heavy intensity variants.
 - Day and night rendering with condition-specific sky palettes.
 - Subtle/rich fidelity modes for states with extra visual detail.
 - Moon phase rendering and gated celestial events.
-- Core TypeScript API plus a small React wrapper.
-- Duotone SVG weather icons for every condition and intensity.
+- Core JavaScript API with TypeScript types plus a small React wrapper.
+- Duotone SVG weather icons for the core icon-supported conditions and intensities.
 - Deterministic test hooks for visual and unit testing.
 
 ## Quick Start
@@ -54,12 +54,14 @@ npm test
 npm run test:visual
 ```
 
-## Package Usage
+## JavaScript Usage
 
-```ts
+ES modules:
+
+```js
 import { WeatherScene } from 'weather-animations';
 
-const container = document.querySelector('#weather') as HTMLElement;
+const container = document.querySelector('#weather');
 const scene = new WeatherScene(container);
 
 scene.set({
@@ -71,25 +73,51 @@ scene.set({
 });
 ```
 
-Update the scene whenever the weather changes:
+CommonJS:
 
-```ts
+```js
+const { WeatherScene } = require('weather-animations');
+
+const container = document.querySelector('#weather');
+const scene = new WeatherScene(container);
+
 scene.set({
-  condition: 'wind',
-  intensity: 'heavy',
+  condition: 'showers',
+  intensity: 'medium',
   time: 'day',
 });
 ```
 
 Clean up when the host view unmounts:
 
-```ts
+```js
 scene.destroy();
+```
+
+## TypeScript Usage
+
+The package ships generated declaration files for the core API, React wrapper, and icon components.
+
+```ts
+import { WeatherScene, type WeatherConfig } from 'weather-animations';
+
+const container = document.querySelector<HTMLElement>('#weather');
+if (!container) throw new Error('Missing weather container');
+
+const config: WeatherConfig = {
+  condition: 'freezing-rain',
+  intensity: 'medium',
+  time: 'night',
+};
+
+new WeatherScene(container).set(config);
 ```
 
 ## React Usage
 
-```tsx
+JavaScript or TypeScript React apps can import the wrapper from `weather-animations/react`.
+
+```jsx
 import { WeatherBackground } from 'weather-animations/react';
 
 export function App() {
@@ -110,7 +138,7 @@ The icon subpackage provides 24 duotone SVG icons: 8 icon-supported weather cond
 
 React components:
 
-```tsx
+```jsx
 import { RainHeavyIcon, getIconName } from 'weather-animations/react-icons';
 
 export function WeatherBadge() {
@@ -122,7 +150,7 @@ export function WeatherBadge() {
       style={{
         '--wi-primary': '#5f7480',
         '--wi-accent': '#38a7ff',
-      } as React.CSSProperties}
+      }}
     />
   );
 }
@@ -132,19 +160,19 @@ getIconName('rain', 'heavy'); // "rain-heavy"
 
 Raw SVG assets are exported from `weather-animations/icons/*`:
 
-```ts
+```js
 const iconPath = require.resolve('weather-animations/icons/rain-heavy.svg');
 ```
 
 Icon components use standard SVG props such as `width`, `height`, `className`, `style`, and ARIA attributes. Colors can be themed with `--wi-primary` and `--wi-accent`.
 
-Icons currently cover `clear`, `cloudy`, `rain`, `snow`, `storm`, `fog`, `wind`, and `hail`. Newer render-only conditions such as `drizzle`, `overcast`, `mist`, `haze`, and `sleet` can be mapped to nearby icons by the host app until dedicated icons are added.
+Icons currently cover `clear`, `cloudy`, `rain`, `snow`, `storm`, `fog`, `wind`, and `hail`. Newer render-only conditions such as `drizzle`, `showers`, `freezing-rain`, `overcast`, `mist`, `haze`, `smoke`, `dust`, `sleet`, `flurries`, and `blizzard` can be mapped to nearby icons by the host app until dedicated icons are added.
 
 ## Configuration
 
 | Option | Values | Default |
 | --- | --- | --- |
-| `condition` | `clear`, `cloudy`, `overcast`, `rain`, `drizzle`, `sleet`, `snow`, `storm`, `fog`, `mist`, `haze`, `wind`, `hail` | Required |
+| `condition` | `clear`, `cloudy`, `overcast`, `rain`, `drizzle`, `showers`, `freezing-rain`, `sleet`, `snow`, `flurries`, `blizzard`, `storm`, `fog`, `mist`, `haze`, `smoke`, `dust`, `wind`, `hail` | Required |
 | `intensity` | `light`, `medium`, `heavy` | `medium` |
 | `time` | `day`, `night` | `day` |
 | `fidelity` | `subtle`, `rich` | `subtle` |
@@ -171,7 +199,7 @@ The public API is intentionally small so it can be mapped from most weather prov
 
 Provider-neutral helper:
 
-```ts
+```js
 import { normalizeWeatherInput, WeatherScene } from 'weather-animations';
 
 const config = normalizeWeatherInput({

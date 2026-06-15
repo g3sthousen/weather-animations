@@ -11,7 +11,13 @@ export type Condition =
   | 'overcast'
   | 'mist'
   | 'haze'
-  | 'sleet';
+  | 'smoke'
+  | 'dust'
+  | 'sleet'
+  | 'showers'
+  | 'freezing-rain'
+  | 'flurries'
+  | 'blizzard';
 export type Intensity = 'light' | 'medium' | 'heavy';
 export type TimeOfDay = 'day' | 'night';
 export type Fidelity = 'subtle' | 'rich';
@@ -37,12 +43,11 @@ export interface WeatherConfig {
   celestialProgress?: number;
 }
 
-export type WeatherInputPrecipitationType = 'none' | 'rain' | 'drizzle' | 'snow' | 'sleet' | 'hail';
-export type WeatherInputVisibility = 'clear' | 'haze' | 'mist' | 'fog' | number;
+export type WeatherInputPrecipitationType = 'none' | 'rain' | 'drizzle' | 'snow' | 'sleet' | 'hail' | 'freezing-rain';
+export type WeatherInputVisibility = 'clear' | 'haze' | 'mist' | 'fog' | 'smoke' | 'dust' | number;
 export type WeatherInputPhenomenon =
   | Condition
   | 'thunderstorm'
-  | 'showers'
   | 'partly-cloudy'
   | 'mostly-cloudy';
 
@@ -126,7 +131,13 @@ export const VALID_CONDITIONS: Condition[] = [
   'overcast',
   'mist',
   'haze',
+  'smoke',
+  'dust',
   'sleet',
+  'showers',
+  'freezing-rain',
+  'flurries',
+  'blizzard',
 ];
 export const VALID_CELESTIAL_EVENTS: CelestialEvent[] = ['none', 'sunrise', 'sunset', 'moonrise', 'moonset'];
 export const VALID_MOON_PHASES: MoonPhase[] = [
@@ -161,7 +172,9 @@ export function isFidelityEffective(config: Pick<ResolvedConfig, 'condition'>): 
     && config.condition !== 'fog'
     && config.condition !== 'overcast'
     && config.condition !== 'mist'
-    && config.condition !== 'haze';
+    && config.condition !== 'haze'
+    && config.condition !== 'smoke'
+    && config.condition !== 'dust';
 }
 
 export function resolveConfig(config: WeatherConfig): ResolvedConfig {
@@ -221,7 +234,6 @@ function conditionFromPhenomenon(phenomenon: string | undefined): Condition | nu
   if (!phenomenon) return null;
   if (VALID_CONDITIONS.includes(phenomenon as Condition)) return phenomenon as Condition;
   if (phenomenon === 'thunderstorm') return 'storm';
-  if (phenomenon === 'showers') return 'rain';
   if (phenomenon === 'partly-cloudy' || phenomenon === 'mostly-cloudy') return 'cloudy';
   return null;
 }
@@ -237,6 +249,8 @@ function conditionFromVisibility(visibility: WeatherInputVisibility | undefined)
   if (visibility === 'fog') return { condition: 'fog', intensity: 'medium' };
   if (visibility === 'mist') return { condition: 'mist', intensity: 'medium' };
   if (visibility === 'haze') return { condition: 'haze', intensity: 'medium' };
+  if (visibility === 'smoke') return { condition: 'smoke', intensity: 'medium' };
+  if (visibility === 'dust') return { condition: 'dust', intensity: 'medium' };
   if (typeof visibility !== 'number' || !Number.isFinite(visibility)) return null;
   if (visibility < 1000) return { condition: 'fog', intensity: 'heavy' };
   if (visibility < 3000) return { condition: 'fog', intensity: 'medium' };
@@ -255,7 +269,7 @@ export function normalizeWeatherInput(input: WeatherInput): WeatherConfig {
   }
 
   if (input.precipitationType && input.precipitationType !== 'none') {
-    const precipitationConditions: Condition[] = ['rain', 'drizzle', 'snow', 'sleet', 'hail'];
+    const precipitationConditions: Condition[] = ['rain', 'drizzle', 'snow', 'sleet', 'hail', 'freezing-rain'];
     const condition = precipitationConditions.includes(input.precipitationType as Condition)
       ? input.precipitationType as Condition
       : null;
@@ -287,6 +301,15 @@ export function normalizeWeatherInput(input: WeatherInput): WeatherConfig {
     }
   }
 
+  const phenomenon = conditionFromPhenomenon(input.phenomenon);
+  if (phenomenon && phenomenon !== 'clear' && phenomenon !== 'cloudy') {
+    return {
+      condition: phenomenon,
+      intensity: intensityFromPhenomenon(input.phenomenon) ?? normalizeIntensity(input.precipitationIntensity),
+      ...(input.time ? { time: input.time } : {}),
+    };
+  }
+
   if (typeof input.windSpeed === 'number' && Number.isFinite(input.windSpeed) && input.windSpeed >= 12) {
     return {
       condition: 'wind',
@@ -295,7 +318,6 @@ export function normalizeWeatherInput(input: WeatherInput): WeatherConfig {
     };
   }
 
-  const phenomenon = conditionFromPhenomenon(input.phenomenon);
   if (phenomenon) {
     return {
       condition: phenomenon,
