@@ -2,6 +2,8 @@
 
 Canvas-powered TypeScript weather backgrounds with smooth transitions, configurable intensity, day/night palettes, moon phases, and sunrise, sunset, moonrise, and moonset events.
 
+Live demo: [g3sthousen.github.io/weather-animations](https://g3sthousen.github.io/weather-animations/)
+
 ## Features
 
 - Animated weather states for clear, cloudy, rain, snow, storm, fog, wind, and hail.
@@ -31,6 +33,12 @@ Build the core, React, and icon library bundles:
 
 ```bash
 npm run build
+```
+
+Build the static demo for GitHub Pages:
+
+```bash
+npm run build:demo
 ```
 
 Run tests:

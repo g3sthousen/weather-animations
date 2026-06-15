@@ -11,7 +11,7 @@
   "bugs": {
     "url": "https://github.com/g3sthousen/weather-animations/issues"
   },
-  "homepage": "https://github.com/g3sthousen/weather-animations#readme",
+  "homepage": "https://g3sthousen.github.io/weather-animations/",
   "keywords": [
     "weather",
     "animation",
@@ -56,6 +56,7 @@
     "build:icons": "vite build --config vite.icons.config.ts && node scripts/copy-icons.mjs",
     "build:types": "tsc --project tsconfig.types.json",
     "build": "npm run build:lib && npm run build:icons && npm run build:types",
+    "build:demo": "vite build --base=/weather-animations/",
     "prepack": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
