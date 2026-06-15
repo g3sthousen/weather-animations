@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
-  <path d="M6 16 Q18 10 30 16 Q38 20 44 16" stroke="var(--wi-primary,#90A4AE)" stroke-width="3" fill="none" stroke-linecap="round"/>
-  <path d="M6 25 Q18 19 30 25 Q38 29 44 25" stroke="var(--wi-primary,#90A4AE)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.85"/>
-  <path d="M6 34 Q18 28 30 34 Q38 38 44 34" stroke="var(--wi-primary,#90A4AE)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.7"/>
-  <path d="M34 34c3-3 7-2 8 2-3 2-6 2-8-2z" fill="var(--wi-accent,#8BC34A)" opacity="0.75"/>
-</svg>

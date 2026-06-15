@@ -2,32 +2,45 @@ import * as React from 'react';
 
 export type WeatherIconProps = React.SVGProps<SVGSVGElement>;
 export type WeatherIconComponent = React.FC<WeatherIconProps>;
-export type IconCondition = 'clear' | 'cloudy' | 'rain' | 'snow' | 'storm' | 'fog' | 'wind' | 'hail';
-export type IconIntensity = 'light' | 'medium' | 'heavy';
+export type IconCondition =
+  | 'clear'
+  | 'cloudy'
+  | 'overcast'
+  | 'rain'
+  | 'drizzle'
+  | 'showers'
+  | 'freezing-rain'
+  | 'sleet'
+  | 'snow'
+  | 'flurries'
+  | 'blizzard'
+  | 'storm'
+  | 'hail'
+  | 'fog'
+  | 'mist'
+  | 'haze'
+  | 'smoke'
+  | 'dust'
+  | 'wind';
 
-export const ClearLightIcon: WeatherIconComponent;
-export const ClearMediumIcon: WeatherIconComponent;
-export const ClearHeavyIcon: WeatherIconComponent;
-export const CloudyLightIcon: WeatherIconComponent;
-export const CloudyMediumIcon: WeatherIconComponent;
-export const CloudyHeavyIcon: WeatherIconComponent;
-export const RainLightIcon: WeatherIconComponent;
-export const RainMediumIcon: WeatherIconComponent;
-export const RainHeavyIcon: WeatherIconComponent;
-export const SnowLightIcon: WeatherIconComponent;
-export const SnowMediumIcon: WeatherIconComponent;
-export const SnowHeavyIcon: WeatherIconComponent;
-export const StormLightIcon: WeatherIconComponent;
-export const StormMediumIcon: WeatherIconComponent;
-export const StormHeavyIcon: WeatherIconComponent;
-export const FogLightIcon: WeatherIconComponent;
-export const FogMediumIcon: WeatherIconComponent;
-export const FogHeavyIcon: WeatherIconComponent;
-export const WindLightIcon: WeatherIconComponent;
-export const WindMediumIcon: WeatherIconComponent;
-export const WindHeavyIcon: WeatherIconComponent;
-export const HailLightIcon: WeatherIconComponent;
-export const HailMediumIcon: WeatherIconComponent;
-export const HailHeavyIcon: WeatherIconComponent;
+export const ClearIcon: WeatherIconComponent;
+export const CloudyIcon: WeatherIconComponent;
+export const OvercastIcon: WeatherIconComponent;
+export const RainIcon: WeatherIconComponent;
+export const DrizzleIcon: WeatherIconComponent;
+export const ShowersIcon: WeatherIconComponent;
+export const FreezingRainIcon: WeatherIconComponent;
+export const SleetIcon: WeatherIconComponent;
+export const SnowIcon: WeatherIconComponent;
+export const FlurriesIcon: WeatherIconComponent;
+export const BlizzardIcon: WeatherIconComponent;
+export const StormIcon: WeatherIconComponent;
+export const HailIcon: WeatherIconComponent;
+export const FogIcon: WeatherIconComponent;
+export const MistIcon: WeatherIconComponent;
+export const HazeIcon: WeatherIconComponent;
+export const SmokeIcon: WeatherIconComponent;
+export const DustIcon: WeatherIconComponent;
+export const WindIcon: WeatherIconComponent;
 
-export function getIconName(condition: IconCondition, intensity: IconIntensity): string;
+export function getIconName(condition: IconCondition): string;

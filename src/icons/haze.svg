@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <circle cx="24" cy="19" r="9" fill="var(--wi-primary,#FFB300)"/>
+  <line x1="11" y1="23" x2="37" y2="23" stroke="var(--wi-accent,#B0BEC5)" stroke-width="3" stroke-linecap="round"/>
+  <line x1="8" y1="31" x2="40" y2="31" stroke="var(--wi-accent,#B0BEC5)" stroke-width="3" stroke-linecap="round"/>
+  <line x1="10" y1="39" x2="38" y2="39" stroke="var(--wi-accent,#B0BEC5)" stroke-width="3" stroke-linecap="round"/>
+</svg>

@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
-  <path d="M4 13 Q16 7 28 13 Q36 17 44 13" stroke="var(--wi-primary,#90A4AE)" stroke-width="3" fill="none" stroke-linecap="round"/>
-  <path d="M4 21 Q16 15 28 21 Q36 25 44 21" stroke="var(--wi-primary,#90A4AE)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.9"/>
-  <path d="M4 30 Q16 24 28 30 Q36 34 44 30" stroke="var(--wi-primary,#90A4AE)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.8"/>
-  <path d="M4 39 Q16 33 28 39 Q36 43 44 39" stroke="var(--wi-primary,#90A4AE)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.7"/>
-  <path d="M32 30c3-3 7-2 8 2-3 2-6 2-8-2z" fill="var(--wi-accent,#8BC34A)" opacity="0.75"/>
-  <path d="M18 39c3-3 7-2 8 2-3 2-6 2-8-2z" fill="var(--wi-accent,#8BC34A)" opacity="0.65"/>
-</svg>

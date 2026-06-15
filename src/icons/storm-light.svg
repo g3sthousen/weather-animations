@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
-  <circle cx="17" cy="20" r="5" fill="var(--wi-primary,#455A64)"/>
-  <circle cx="24" cy="16" r="7" fill="var(--wi-primary,#455A64)"/>
-  <circle cx="31" cy="20" r="5" fill="var(--wi-primary,#455A64)"/>
-  <rect x="12" y="20" width="24" height="5" rx="2" fill="var(--wi-primary,#455A64)"/>
-  <path d="M24 27l-5 9h5l-2 8 8-11h-5l3-6z" fill="var(--wi-accent,#FFC107)"/>
-</svg>

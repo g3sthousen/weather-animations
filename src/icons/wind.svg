@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <path d="M6 17 H30 a4 4 0 1 0 -4 -4" stroke="var(--wi-primary,#90A4AE)" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M6 26 H38 a4.5 4.5 0 1 1 -4.5 4.5" stroke="var(--wi-accent,#B0BEC5)" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M6 35 H22 a3.5 3.5 0 1 0 -3.5 -3.5" stroke="var(--wi-primary,#90A4AE)" stroke-width="3" stroke-linecap="round" fill="none"/>
+</svg>

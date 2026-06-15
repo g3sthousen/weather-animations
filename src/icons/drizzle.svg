@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <circle cx="17" cy="17" r="5" fill="var(--wi-primary,#90A4AE)"/>
+  <circle cx="24" cy="13" r="7" fill="var(--wi-primary,#90A4AE)"/>
+  <circle cx="31" cy="17" r="5" fill="var(--wi-primary,#90A4AE)"/>
+  <rect x="12" y="17" width="24" height="5" rx="2.5" fill="var(--wi-primary,#90A4AE)"/>
+  <line x1="16" y1="28" x2="14.5" y2="32" stroke="var(--wi-accent,#4FC3F7)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="24" y1="28" x2="22.5" y2="32" stroke="var(--wi-accent,#4FC3F7)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="32" y1="28" x2="30.5" y2="32" stroke="var(--wi-accent,#4FC3F7)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="20" y1="34" x2="18.5" y2="38" stroke="var(--wi-accent,#4FC3F7)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="28" y1="34" x2="26.5" y2="38" stroke="var(--wi-accent,#4FC3F7)" stroke-width="2" stroke-linecap="round"/>
+</svg>

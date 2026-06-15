@@ -134,19 +134,41 @@ export function App() {
 
 ## Weather Icons
 
-The icon subpackage provides 24 duotone SVG icons: 8 icon-supported weather conditions times 3 intensities.
+The icon subpackage provides one duotone SVG icon per weather condition — all 19 conditions are covered.
+
+| Icon | Condition | React component | Raw SVG |
+| --- | --- | --- | --- |
+| <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/clear.svg" width="32" height="32" alt="Clear icon"> | `clear` | `ClearIcon` | `weather-animations/icons/clear.svg` |
+| <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/cloudy.svg" width="32" height="32" alt="Cloudy icon"> | `cloudy` | `CloudyIcon` | `weather-animations/icons/cloudy.svg` |
+| <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/overcast.svg" width="32" height="32" alt="Overcast icon"> | `overcast` | `OvercastIcon` | `weather-animations/icons/overcast.svg` |
+| <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/rain.svg" width="32" height="32" alt="Rain icon"> | `rain` | `RainIcon` | `weather-animations/icons/rain.svg` |
+| <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/drizzle.svg" width="32" height="32" alt="Drizzle icon"> | `drizzle` | `DrizzleIcon` | `weather-animations/icons/drizzle.svg` |
+| <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/showers.svg" width="32" height="32" alt="Showers icon"> | `showers` | `ShowersIcon` | `weather-animations/icons/showers.svg` |
+| <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/freezing-rain.svg" width="32" height="32" alt="Freezing rain icon"> | `freezing-rain` | `FreezingRainIcon` | `weather-animations/icons/freezing-rain.svg` |
+| <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/sleet.svg" width="32" height="32" alt="Sleet icon"> | `sleet` | `SleetIcon` | `weather-animations/icons/sleet.svg` |
+| <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/snow.svg" width="32" height="32" alt="Snow icon"> | `snow` | `SnowIcon` | `weather-animations/icons/snow.svg` |
+| <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/flurries.svg" width="32" height="32" alt="Flurries icon"> | `flurries` | `FlurriesIcon` | `weather-animations/icons/flurries.svg` |
+| <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/blizzard.svg" width="32" height="32" alt="Blizzard icon"> | `blizzard` | `BlizzardIcon` | `weather-animations/icons/blizzard.svg` |
+| <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/storm.svg" width="32" height="32" alt="Storm icon"> | `storm` | `StormIcon` | `weather-animations/icons/storm.svg` |
+| <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/hail.svg" width="32" height="32" alt="Hail icon"> | `hail` | `HailIcon` | `weather-animations/icons/hail.svg` |
+| <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/fog.svg" width="32" height="32" alt="Fog icon"> | `fog` | `FogIcon` | `weather-animations/icons/fog.svg` |
+| <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/mist.svg" width="32" height="32" alt="Mist icon"> | `mist` | `MistIcon` | `weather-animations/icons/mist.svg` |
+| <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/haze.svg" width="32" height="32" alt="Haze icon"> | `haze` | `HazeIcon` | `weather-animations/icons/haze.svg` |
+| <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/smoke.svg" width="32" height="32" alt="Smoke icon"> | `smoke` | `SmokeIcon` | `weather-animations/icons/smoke.svg` |
+| <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/dust.svg" width="32" height="32" alt="Dust icon"> | `dust` | `DustIcon` | `weather-animations/icons/dust.svg` |
+| <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/wind.svg" width="32" height="32" alt="Wind icon"> | `wind` | `WindIcon` | `weather-animations/icons/wind.svg` |
 
 React components:
 
 ```jsx
-import { RainHeavyIcon, getIconName } from 'weather-animations/react-icons';
+import { RainIcon, getIconName } from 'weather-animations/react-icons';
 
 export function WeatherBadge() {
   return (
-    <RainHeavyIcon
+    <RainIcon
       width={32}
       height={32}
-      aria-label="Heavy rain"
+      aria-label="Rain"
       style={{
         '--wi-primary': '#5f7480',
         '--wi-accent': '#38a7ff',
@@ -155,18 +177,18 @@ export function WeatherBadge() {
   );
 }
 
-getIconName('rain', 'heavy'); // "rain-heavy"
+getIconName('rain'); // "rain"
 ```
 
 Raw SVG assets are exported from `weather-animations/icons/*`:
 
 ```js
-const iconPath = require.resolve('weather-animations/icons/rain-heavy.svg');
+const iconPath = require.resolve('weather-animations/icons/rain.svg');
 ```
 
 Icon components use standard SVG props such as `width`, `height`, `className`, `style`, and ARIA attributes. Colors can be themed with `--wi-primary` and `--wi-accent`.
 
-Icons currently cover `clear`, `cloudy`, `rain`, `snow`, `storm`, `fog`, `wind`, and `hail`. Newer render-only conditions such as `drizzle`, `showers`, `freezing-rain`, `overcast`, `mist`, `haze`, `smoke`, `dust`, `sleet`, `flurries`, and `blizzard` can be mapped to nearby icons by the host app until dedicated icons are added.
+Icons cover every condition: `clear`, `cloudy`, `overcast`, `rain`, `drizzle`, `showers`, `freezing-rain`, `sleet`, `snow`, `flurries`, `blizzard`, `storm`, `hail`, `fog`, `mist`, `haze`, `smoke`, `dust`, and `wind`. The component name is the PascalCase condition followed by `Icon` (e.g. `FreezingRainIcon`).
 
 ## Configuration
 

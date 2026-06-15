@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
-  <line x1="6" y1="13" x2="42" y2="13" stroke="var(--wi-primary,#B0BEC5)" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="10" y1="22" x2="38" y2="22" stroke="var(--wi-primary,#B0BEC5)" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="6" y1="31" x2="42" y2="31" stroke="var(--wi-primary,#B0BEC5)" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="10" y1="40" x2="38" y2="40" stroke="var(--wi-primary,#B0BEC5)" stroke-width="4.5" stroke-linecap="round"/>
-  <circle cx="42" cy="13" r="1" fill="var(--wi-accent,#ECEFF1)" opacity="0.01"/>
-</svg>
