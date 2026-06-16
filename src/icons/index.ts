@@ -14,6 +14,7 @@ export { default as HailIcon } from './hail.svg?react';
 export { default as FogIcon } from './fog.svg?react';
 export { default as MistIcon } from './mist.svg?react';
 export { default as HazeIcon } from './haze.svg?react';
+export { default as SmogIcon } from './smog.svg?react';
 export { default as SmokeIcon } from './smoke.svg?react';
 export { default as DustIcon } from './dust.svg?react';
 export { default as WindIcon } from './wind.svg?react';

@@ -11,6 +11,7 @@ export type Condition =
   | 'overcast'
   | 'mist'
   | 'haze'
+  | 'smog'
   | 'smoke'
   | 'dust'
   | 'sleet'
@@ -44,7 +45,7 @@ export interface WeatherConfig {
 }
 
 export type WeatherInputPrecipitationType = 'none' | 'rain' | 'drizzle' | 'snow' | 'sleet' | 'hail' | 'freezing-rain';
-export type WeatherInputVisibility = 'clear' | 'haze' | 'mist' | 'fog' | 'smoke' | 'dust' | number;
+export type WeatherInputVisibility = 'clear' | 'haze' | 'mist' | 'fog' | 'smog' | 'smoke' | 'dust' | number;
 export type WeatherInputPhenomenon =
   | Condition
   | 'thunderstorm'
@@ -131,6 +132,7 @@ export const VALID_CONDITIONS: Condition[] = [
   'overcast',
   'mist',
   'haze',
+  'smog',
   'smoke',
   'dust',
   'sleet',
@@ -156,15 +158,19 @@ export function isCelestialEventVisible(
   config: Pick<ResolvedConfig, 'condition' | 'intensity' | 'time'>,
 ): boolean {
   if (event === 'none') return true;
-  const skyAllowsCelestialEvent = config.condition === 'clear'
-    || config.condition === 'wind'
-    || (config.condition === 'cloudy' && config.intensity !== 'heavy');
-  if (!skyAllowsCelestialEvent) return false;
 
   if (event === 'sunrise' || event === 'sunset') {
-    return config.time === 'day';
+    const skyAllowsSunEvent = config.condition === 'clear'
+      || config.condition === 'wind'
+      || (config.condition === 'cloudy' && config.intensity !== 'heavy')
+      || (config.condition === 'haze' && config.intensity !== 'heavy');
+    return skyAllowsSunEvent && config.time === 'day';
   }
-  return config.time === 'night';
+
+  const skyAllowsMoonEvent = config.condition === 'clear'
+    || config.condition === 'wind'
+    || (config.condition === 'cloudy' && config.intensity !== 'heavy');
+  return skyAllowsMoonEvent && config.time === 'night';
 }
 
 export function isFidelityEffective(config: Pick<ResolvedConfig, 'condition'>): boolean {
@@ -173,6 +179,7 @@ export function isFidelityEffective(config: Pick<ResolvedConfig, 'condition'>): 
     && config.condition !== 'overcast'
     && config.condition !== 'mist'
     && config.condition !== 'haze'
+    && config.condition !== 'smog'
     && config.condition !== 'smoke'
     && config.condition !== 'dust';
 }
@@ -249,6 +256,7 @@ function conditionFromVisibility(visibility: WeatherInputVisibility | undefined)
   if (visibility === 'fog') return { condition: 'fog', intensity: 'medium' };
   if (visibility === 'mist') return { condition: 'mist', intensity: 'medium' };
   if (visibility === 'haze') return { condition: 'haze', intensity: 'medium' };
+  if (visibility === 'smog') return { condition: 'smog', intensity: 'medium' };
   if (visibility === 'smoke') return { condition: 'smoke', intensity: 'medium' };
   if (visibility === 'dust') return { condition: 'dust', intensity: 'medium' };
   if (typeof visibility !== 'number' || !Number.isFinite(visibility)) return null;

@@ -11,7 +11,8 @@ describe('hail condition', () => {
 });
 
 describe('expanded weather conditions', () => {
-  const expanded = ['drizzle', 'overcast', 'mist', 'haze', 'smoke', 'sleet', 'showers', 'freezing-rain', 'flurries', 'blizzard', 'dust'] as const;
+  const expanded = ['drizzle', 'overcast', 'mist', 'haze', 'smog', 'smoke', 'sleet', 'showers', 'freezing-rain', 'flurries', 'blizzard', 'dust'] as const;
+  const fullyCovered = expanded.filter((condition) => condition !== 'haze');
 
   it('exports new conditions as valid renderer conditions', () => {
     for (const condition of expanded) {
@@ -21,7 +22,7 @@ describe('expanded weather conditions', () => {
   });
 
   it('keeps celestial events unavailable for the new covered or low-visibility states', () => {
-    for (const condition of expanded) {
+    for (const condition of fullyCovered) {
       expect(resolveConfig({ condition, time: 'day', celestialEvent: 'sunrise' }).celestialEvent).toBe('none');
       expect(resolveConfig({ condition, time: 'night', celestialEvent: 'moonrise' }).celestialEvent).toBe('none');
     }
@@ -44,6 +45,7 @@ describe('isFidelityEffective', () => {
     expect(isFidelityEffective({ condition: 'overcast' })).toBe(false);
     expect(isFidelityEffective({ condition: 'mist' })).toBe(false);
     expect(isFidelityEffective({ condition: 'haze' })).toBe(false);
+    expect(isFidelityEffective({ condition: 'smog' })).toBe(false);
     expect(isFidelityEffective({ condition: 'smoke' })).toBe(false);
     expect(isFidelityEffective({ condition: 'dust' })).toBe(false);
   });
@@ -109,6 +111,11 @@ describe('resolveConfig celestial events', () => {
     expect(resolveConfig({ condition: 'cloudy', intensity: 'medium', time: 'night', celestialEvent: 'moonset' }).celestialEvent).toBe('moonset');
   });
 
+  it('allows matching sun events in light and medium haze during the day', () => {
+    expect(resolveConfig({ condition: 'haze', intensity: 'light', time: 'day', celestialEvent: 'sunrise' }).celestialEvent).toBe('sunrise');
+    expect(resolveConfig({ condition: 'haze', intensity: 'medium', time: 'day', celestialEvent: 'sunset' }).celestialEvent).toBe('sunset');
+  });
+
   it('allows matching celestial events in windy conditions', () => {
     expect(resolveConfig({ condition: 'wind', time: 'day', celestialEvent: 'sunset' }).celestialEvent).toBe('sunset');
     expect(resolveConfig({ condition: 'wind', time: 'night', celestialEvent: 'moonrise' }).celestialEvent).toBe('moonrise');
@@ -117,6 +124,9 @@ describe('resolveConfig celestial events', () => {
   it('falls back to none when celestial events do not match visible conditions', () => {
     expect(resolveConfig({ condition: 'rain', time: 'day', celestialEvent: 'sunrise' }).celestialEvent).toBe('none');
     expect(resolveConfig({ condition: 'cloudy', intensity: 'heavy', time: 'day', celestialEvent: 'sunset' }).celestialEvent).toBe('none');
+    expect(resolveConfig({ condition: 'haze', intensity: 'heavy', time: 'day', celestialEvent: 'sunrise' }).celestialEvent).toBe('none');
+    expect(resolveConfig({ condition: 'haze', intensity: 'light', time: 'night', celestialEvent: 'moonrise' }).celestialEvent).toBe('none');
+    expect(resolveConfig({ condition: 'haze', intensity: 'medium', time: 'night', celestialEvent: 'moonset' }).celestialEvent).toBe('none');
     expect(resolveConfig({ condition: 'clear', time: 'night', celestialEvent: 'sunrise' }).celestialEvent).toBe('none');
     expect(resolveConfig({ condition: 'clear', time: 'day', celestialEvent: 'moonrise' }).celestialEvent).toBe('none');
   });
@@ -140,12 +150,15 @@ describe('isCelestialEventVisible', () => {
     expect(isCelestialEventVisible('none', { condition: 'storm', intensity: 'heavy', time: 'night' })).toBe(true);
   });
 
-  it('allows sun events only in clear, wind, or light/medium cloudy days', () => {
+  it('allows sun events only in clear, wind, light/medium cloudy, or light/medium haze days', () => {
     expect(isCelestialEventVisible('sunrise', { condition: 'clear', intensity: 'heavy', time: 'day' })).toBe(true);
     expect(isCelestialEventVisible('sunrise', { condition: 'wind', intensity: 'medium', time: 'day' })).toBe(true);
     expect(isCelestialEventVisible('sunset', { condition: 'cloudy', intensity: 'light', time: 'day' })).toBe(true);
     expect(isCelestialEventVisible('sunset', { condition: 'cloudy', intensity: 'medium', time: 'day' })).toBe(true);
+    expect(isCelestialEventVisible('sunrise', { condition: 'haze', intensity: 'light', time: 'day' })).toBe(true);
+    expect(isCelestialEventVisible('sunset', { condition: 'haze', intensity: 'medium', time: 'day' })).toBe(true);
     expect(isCelestialEventVisible('sunrise', { condition: 'cloudy', intensity: 'heavy', time: 'day' })).toBe(false);
+    expect(isCelestialEventVisible('sunrise', { condition: 'haze', intensity: 'heavy', time: 'day' })).toBe(false);
     expect(isCelestialEventVisible('sunrise', { condition: 'clear', intensity: 'medium', time: 'night' })).toBe(false);
   });
 
@@ -156,6 +169,8 @@ describe('isCelestialEventVisible', () => {
     expect(isCelestialEventVisible('moonset', { condition: 'cloudy', intensity: 'medium', time: 'night' })).toBe(true);
     expect(isCelestialEventVisible('moonrise', { condition: 'cloudy', intensity: 'heavy', time: 'night' })).toBe(false);
     expect(isCelestialEventVisible('moonrise', { condition: 'fog', intensity: 'medium', time: 'night' })).toBe(false);
+    expect(isCelestialEventVisible('moonrise', { condition: 'haze', intensity: 'light', time: 'night' })).toBe(false);
+    expect(isCelestialEventVisible('moonset', { condition: 'haze', intensity: 'medium', time: 'night' })).toBe(false);
     expect(isCelestialEventVisible('moonrise', { condition: 'clear', intensity: 'medium', time: 'day' })).toBe(false);
   });
 });
@@ -181,6 +196,7 @@ describe('normalizeWeatherInput', () => {
     expect(normalizeWeatherInput({ thunderstorm: true, precipitationIntensity: 0.5 })).toEqual({ condition: 'storm', intensity: 'medium' });
     expect(normalizeWeatherInput({ visibility: 'mist' })).toEqual({ condition: 'mist', intensity: 'medium' });
     expect(normalizeWeatherInput({ visibility: 'haze' })).toEqual({ condition: 'haze', intensity: 'medium' });
+    expect(normalizeWeatherInput({ visibility: 'smog' })).toEqual({ condition: 'smog', intensity: 'medium' });
     expect(normalizeWeatherInput({ visibility: 'smoke' })).toEqual({ condition: 'smoke', intensity: 'medium' });
     expect(normalizeWeatherInput({ visibility: 'dust' })).toEqual({ condition: 'dust', intensity: 'medium' });
     expect(normalizeWeatherInput({ visibility: 800 })).toEqual({ condition: 'fog', intensity: 'heavy' });
@@ -191,6 +207,7 @@ describe('normalizeWeatherInput', () => {
     expect(normalizeWeatherInput({ phenomenon: 'showers', precipitationIntensity: 'medium' })).toEqual({ condition: 'showers', intensity: 'medium' });
     expect(normalizeWeatherInput({ phenomenon: 'flurries' })).toEqual({ condition: 'flurries', intensity: 'medium' });
     expect(normalizeWeatherInput({ phenomenon: 'blizzard', windSpeed: 60 })).toEqual({ condition: 'blizzard', intensity: 'medium' });
+    expect(normalizeWeatherInput({ phenomenon: 'smog' })).toEqual({ condition: 'smog', intensity: 'medium' });
     expect(normalizeWeatherInput({ phenomenon: 'dust' })).toEqual({ condition: 'dust', intensity: 'medium' });
   });
 

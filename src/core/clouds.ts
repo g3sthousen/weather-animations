@@ -58,6 +58,7 @@ function shouldShowClouds(condition: string): boolean {
     && condition !== 'fog'
     && condition !== 'mist'
     && condition !== 'haze'
+    && condition !== 'smog'
     && condition !== 'smoke'
     && condition !== 'dust';
 }

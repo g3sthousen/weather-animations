@@ -33,6 +33,8 @@ const SKY_PALETTES: Record<PaletteKey, SkyPalette> = {
   'mist:night':   { top: hexToRgb('#303a46'), bottom: hexToRgb('#4a5560') },
   'haze:day':     { top: hexToRgb('#b7a98d'), bottom: hexToRgb('#e7d5b5') },
   'haze:night':   { top: hexToRgb('#323041'), bottom: hexToRgb('#50495c') },
+  'smog:day':     { top: hexToRgb('#9e967d'), bottom: hexToRgb('#d2c6a5') },
+  'smog:night':   { top: hexToRgb('#2f2d31'), bottom: hexToRgb('#4f493f') },
   'smoke:day':    { top: hexToRgb('#82776b'), bottom: hexToRgb('#b9aa99') },
   'smoke:night':  { top: hexToRgb('#29282c'), bottom: hexToRgb('#46403f') },
   'sleet:day':    { top: hexToRgb('#778690'), bottom: hexToRgb('#c4d0d6') },

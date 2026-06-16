@@ -19,6 +19,7 @@ export type IconCondition =
   | 'fog'
   | 'mist'
   | 'haze'
+  | 'smog'
   | 'smoke'
   | 'dust'
   | 'wind';
@@ -39,6 +40,7 @@ export const HailIcon: WeatherIconComponent;
 export const FogIcon: WeatherIconComponent;
 export const MistIcon: WeatherIconComponent;
 export const HazeIcon: WeatherIconComponent;
+export const SmogIcon: WeatherIconComponent;
 export const SmokeIcon: WeatherIconComponent;
 export const DustIcon: WeatherIconComponent;
 export const WindIcon: WeatherIconComponent;

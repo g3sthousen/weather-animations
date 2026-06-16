@@ -8,6 +8,9 @@ interface FogPlume {
   bobAmp: number;  // px
   bobFreq: number;
   phase: number;
+  swayAmp: number; // px
+  swayFreq: number;
+  swayPhase: number;
   sprite?: OffscreenCanvas;
   spriteR?: number;
   spriteKey?: string;
@@ -51,13 +54,24 @@ const CLOUDY_CELESTIAL_OPACITY: Record<ResolvedConfig['intensity'], number> = {
   heavy: 0,
 };
 
+const HAZE_CELESTIAL_OPACITY: Record<ResolvedConfig['intensity'], number> = {
+  light: 0.35,
+  medium: 0.18,
+  heavy: 0,
+};
+
 export function getCelestialOpacity(config: ResolvedConfig): number {
   if (config.celestialEvent !== 'none') {
     if (!isCelestialEventVisible(config.celestialEvent, config)) return 0;
-    return config.condition === 'cloudy' ? CLOUDY_CELESTIAL_OPACITY[config.intensity] : 1;
+    if (config.condition === 'cloudy') return CLOUDY_CELESTIAL_OPACITY[config.intensity];
+    if (config.condition === 'haze') return HAZE_CELESTIAL_OPACITY[config.intensity];
+    return 1;
   }
   if (config.condition === 'cloudy') {
     return CLOUDY_CELESTIAL_OPACITY[config.intensity];
+  }
+  if (config.condition === 'haze') {
+    return config.time === 'day' ? HAZE_CELESTIAL_OPACITY[config.intensity] : 0;
   }
   if (config.time === 'day' && (config.condition === 'clear' || config.condition === 'wind')) {
     return 1;
@@ -107,10 +121,76 @@ function smokeStepY(config: ResolvedConfig): number {
   return 0.14;
 }
 
+function smogPlumeCount(config: ResolvedConfig): number {
+  if (config.intensity === 'light') return 3;
+  if (config.intensity === 'heavy') return 5;
+  return 4;
+}
+
+function smogStepY(config: ResolvedConfig): number {
+  if (config.intensity === 'light') return 0.15;
+  if (config.intensity === 'heavy') return 0.125;
+  return 0.14;
+}
+
 function dustPlumeCount(config: ResolvedConfig): number {
   if (config.intensity === 'light') return 3;
   if (config.intensity === 'heavy') return 6;
   return 4;
+}
+
+function fogPlumeCount(config: ResolvedConfig): number {
+  if (config.intensity === 'light') return 3;
+  if (config.intensity === 'heavy') return 7;
+  return 5;
+}
+
+function mistPlumeCount(config: ResolvedConfig): number {
+  if (config.intensity === 'light') return 1;
+  if (config.intensity === 'heavy') return 3;
+  return 2;
+}
+
+function intensityMotion(config: ResolvedConfig): number {
+  if (config.intensity === 'light') return 0;
+  if (config.intensity === 'heavy') return 0.004;
+  return 0.002;
+}
+
+function plumeDriftSpeed(config: ResolvedConfig): number {
+  const intensity = intensityMotion(config);
+  if (config.condition === 'haze') return 0.008 + intensity + random() * 0.018;
+  if (config.condition === 'smog') return 0.012 + intensity + random() * 0.024;
+  if (config.condition === 'smoke') return 0.014 + intensity + random() * 0.028;
+  if (config.condition === 'dust') return 0.022 + intensity + random() * 0.032;
+  if (config.condition === 'mist') return 0.006 + intensity * 0.5 + random() * 0.012;
+  return 0.008 + intensity * 0.5 + random() * 0.014;
+}
+
+function plumeSwayAmp(config: ResolvedConfig): number {
+  const intensity = config.intensity === 'light' ? 0.8 : config.intensity === 'heavy' ? 1.25 : 1;
+  if (config.condition === 'haze') return (8 + random() * 8) * intensity;
+  if (config.condition === 'smog') return (10 + random() * 10) * intensity;
+  if (config.condition === 'smoke') return (12 + random() * 12) * intensity;
+  if (config.condition === 'dust') return (14 + random() * 14) * intensity;
+  return (3 + random() * 5) * intensity;
+}
+
+function plumeSwayFreq(config: ResolvedConfig): number {
+  if (config.condition === 'dust') return 0.22 + random() * 0.2;
+  if (config.condition === 'smoke') return 0.18 + random() * 0.17;
+  if (config.condition === 'smog') return 0.14 + random() * 0.16;
+  if (config.condition === 'haze') return 0.1 + random() * 0.12;
+  return 0.08 + random() * 0.1;
+}
+
+function plumeBobAmp(config: ResolvedConfig): number {
+  if (config.condition === 'fog') return 4 + random() * 6;
+  if (config.condition === 'mist') return 2 + random() * 4;
+  if (config.condition === 'smog') return 6 + random() * 13;
+  if (config.condition === 'smoke') return 7 + random() * 16;
+  if (config.condition === 'dust') return 9 + random() * 16;
+  return 5 + random() * 10;
 }
 
 export function updateAtmosphere(state: AtmosphereState, config: ResolvedConfig, delta: number): void {
@@ -146,45 +226,52 @@ export function updateAtmosphere(state: AtmosphereState, config: ResolvedConfig,
     state.boltBranches = null;
   }
 
-  if (config.condition === 'fog' || config.condition === 'mist' || config.condition === 'haze' || config.condition === 'smoke' || config.condition === 'dust') {
+  if (config.condition === 'fog' || config.condition === 'mist' || config.condition === 'haze' || config.condition === 'smog' || config.condition === 'smoke' || config.condition === 'dust') {
     const plumeKey = `${config.condition}:${config.intensity}`;
     if (!state.fogPlumes || state.fogPlumeKey !== plumeKey) {
       const count = config.condition === 'fog'
-        ? 4
+        ? fogPlumeCount(config)
         : config.condition === 'mist'
-          ? 2
-          : config.condition === 'smoke'
-            ? smokePlumeCount(config)
-            : config.condition === 'dust'
-              ? dustPlumeCount(config)
-              : hazePlumeCount(config);
+          ? mistPlumeCount(config)
+          : config.condition === 'smog'
+            ? smogPlumeCount(config)
+            : config.condition === 'smoke'
+              ? smokePlumeCount(config)
+              : config.condition === 'dust'
+                ? dustPlumeCount(config)
+                : hazePlumeCount(config);
       const startY = config.condition === 'haze'
         ? 0.25
         : config.condition === 'mist'
-          ? 0.18
-          : config.condition === 'smoke'
-            ? 0.22
-            : config.condition === 'dust'
-              ? 0.18
-              : 0.45;
+          ? 0.14
+          : config.condition === 'smog'
+            ? 0.2
+            : config.condition === 'smoke'
+              ? 0.22
+              : config.condition === 'dust'
+                ? 0.18
+                : 0.42;
       const stepY = config.condition === 'haze'
         ? hazeStepY(config)
         : config.condition === 'mist'
-          ? 0.2
-          : config.condition === 'smoke'
-            ? smokeStepY(config)
-            : config.condition === 'dust'
+          ? config.intensity === 'heavy' ? 0.16 : 0.18
+          : config.condition === 'smog'
+            ? smogStepY(config)
+            : config.condition === 'smoke'
               ? smokeStepY(config)
-              : 0.14;
+              : config.condition === 'dust'
+                ? smokeStepY(config)
+                : config.intensity === 'heavy' ? 0.075 : 0.085;
       state.fogPlumes = Array.from({ length: count }, (_, i) => ({
         baseX: random(),
-        baseY: startY + i * stepY + random() * 0.06,
-        speed: (config.condition === 'haze' ? 0.006 : config.condition === 'smoke' ? 0.012 : config.condition === 'dust' ? 0.018 : 0.01)
-          + random() * (config.condition === 'smoke' || config.condition === 'dust' ? 0.028 : 0.02),
-        bobAmp: (config.condition === 'fog' ? 8 : config.condition === 'mist' ? 3 : config.condition === 'smoke' ? 7 : config.condition === 'dust' ? 9 : 5)
-          + random() * (config.condition === 'smoke' || config.condition === 'dust' ? 16 : 10),
+        baseY: startY + i * stepY + random() * (config.condition === 'fog' ? 0.04 : 0.06),
+        speed: plumeDriftSpeed(config),
+        bobAmp: plumeBobAmp(config),
         bobFreq: 0.15 + random() * 0.15,
         phase: random() * Math.PI * 2,
+        swayAmp: plumeSwayAmp(config),
+        swayFreq: plumeSwayFreq(config),
+        swayPhase: random() * Math.PI * 2,
       }));
       state.fogPlumeKey = plumeKey;
     }
@@ -211,7 +298,7 @@ export function drawAtmosphere(
 
   drawCelestialEventOverlay(ctx, config, alpha, width, height);
 
-  if (config.condition === 'fog' || config.condition === 'mist' || config.condition === 'haze' || config.condition === 'smoke' || config.condition === 'dust') {
+  if (config.condition === 'fog' || config.condition === 'mist' || config.condition === 'haze' || config.condition === 'smog' || config.condition === 'smoke' || config.condition === 'dust') {
     drawFog(ctx, config, state, width, height);
   }
 
@@ -551,6 +638,8 @@ function buildPlumeSprite(radius: number, config: ResolvedConfig): OffscreenCanv
   const night = config.time === 'night';
   const rgb = config.condition === 'haze'
     ? night ? '118,106,120' : '218,198,158'
+    : config.condition === 'smog'
+      ? night ? '84,78,66' : '190,178,132'
     : config.condition === 'smoke'
       ? night ? '70,66,66' : '126,112,98'
       : config.condition === 'dust'
@@ -568,6 +657,11 @@ function buildPlumeSprite(radius: number, config: ResolvedConfig): OffscreenCanv
     : config.intensity === 'heavy'
       ? { center: 0.42, mid: 0.2 }
       : { center: 0.28, mid: 0.13 };
+  const smogAlpha = config.intensity === 'light'
+    ? { center: 0.14, mid: 0.06 }
+    : config.intensity === 'heavy'
+      ? { center: 0.38, mid: 0.18 }
+      : { center: 0.25, mid: 0.12 };
   const dustAlpha = config.intensity === 'light'
     ? { center: 0.13, mid: 0.06 }
     : config.intensity === 'heavy'
@@ -577,6 +671,8 @@ function buildPlumeSprite(radius: number, config: ResolvedConfig): OffscreenCanv
     ? 0.5
     : config.condition === 'mist'
       ? 0.16
+      : config.condition === 'smog'
+        ? smogAlpha.center
       : config.condition === 'smoke'
         ? smokeAlpha.center
         : config.condition === 'dust'
@@ -586,6 +682,8 @@ function buildPlumeSprite(radius: number, config: ResolvedConfig): OffscreenCanv
     ? 0.22
     : config.condition === 'mist'
       ? 0.065
+      : config.condition === 'smog'
+        ? smogAlpha.mid
       : config.condition === 'smoke'
         ? smokeAlpha.mid
         : config.condition === 'dust'
@@ -612,23 +710,33 @@ function drawFog(
   if (!state.fogPlumes) return;
   const hazeRadius = config.intensity === 'light' ? 0.36 : config.intensity === 'heavy' ? 0.58 : 0.46;
   const hazeOpacity = config.intensity === 'light' ? 0.28 : config.intensity === 'heavy' ? 0.72 : 0.5;
+  const smogRadius = config.intensity === 'light' ? 0.4 : config.intensity === 'heavy' ? 0.6 : 0.5;
+  const smogOpacity = config.intensity === 'light' ? 0.32 : config.intensity === 'heavy' ? 0.78 : 0.54;
   const smokeRadius = config.intensity === 'light' ? 0.44 : config.intensity === 'heavy' ? 0.64 : 0.52;
   const smokeOpacity = config.intensity === 'light' ? 0.36 : config.intensity === 'heavy' ? 0.82 : 0.58;
   const dustRadius = config.intensity === 'light' ? 0.42 : config.intensity === 'heavy' ? 0.66 : 0.54;
   const dustOpacity = config.intensity === 'light' ? 0.32 : config.intensity === 'heavy' ? 0.76 : 0.54;
+  const fogRadius = config.intensity === 'light' ? 0.42 : config.intensity === 'heavy' ? 0.56 : 0.48;
+  const fogOpacity = config.intensity === 'light' ? 0.82 : config.intensity === 'heavy' ? 1 : 0.96;
+  const mistRadius = config.intensity === 'light' ? 0.22 : config.intensity === 'heavy' ? 0.3 : 0.26;
+  const mistOpacity = config.intensity === 'light' ? 0.24 : config.intensity === 'heavy' ? 0.4 : 0.32;
   const radius = width * (config.condition === 'fog'
-    ? 0.4
+    ? fogRadius
     : config.condition === 'mist'
-      ? 0.28
+      ? mistRadius
+      : config.condition === 'smog'
+        ? smogRadius
       : config.condition === 'smoke'
         ? smokeRadius
         : config.condition === 'dust'
           ? dustRadius
           : hazeRadius);
   const opacity = config.condition === 'fog'
-    ? 1
+    ? fogOpacity
     : config.condition === 'mist'
-      ? 0.42
+      ? mistOpacity
+      : config.condition === 'smog'
+        ? smogOpacity
       : config.condition === 'smoke'
         ? smokeOpacity
         : config.condition === 'dust'
@@ -643,7 +751,8 @@ function drawFog(
       pl.spriteR = radius;
       pl.spriteKey = key;
     }
-    const x = pl.baseX * width - radius;
+    const swayX = Math.sin(state.time * pl.swayFreq + pl.swayPhase) * pl.swayAmp;
+    const x = pl.baseX * width - radius + swayX;
     const y = fogBob(state.time, pl.baseY * height, pl.bobAmp, pl.bobFreq, pl.phase) - radius;
     ctx.drawImage(pl.sprite, x, y);
     // wrap copy so the plume re-enters from the left seamlessly

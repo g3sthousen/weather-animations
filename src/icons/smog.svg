@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <path d="M14 24.5H33.5C37.6 24.5 41 21.2 41 17.1C41 13 37.7 9.8 33.7 9.8C32.7 6.4 29.6 4 25.9 4C23.7 4 21.7 4.9 20.2 6.3C18.7 5.5 17 5 15.2 5C9.6 5 5 9.6 5 15.2C5 20.3 9 24.5 14 24.5Z" fill="var(--wi-primary,#B0A58A)"/>
+  <line x1="8" y1="31" x2="40" y2="31" stroke="var(--wi-accent,#7E8A86)" stroke-width="3" stroke-linecap="round"/>
+  <line x1="5" y1="38" x2="28" y2="38" stroke="var(--wi-accent,#7E8A86)" stroke-width="3" stroke-linecap="round"/>
+  <line x1="34" y1="38" x2="43" y2="38" stroke="var(--wi-accent,#7E8A86)" stroke-width="3" stroke-linecap="round"/>
+</svg>

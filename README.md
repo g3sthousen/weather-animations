@@ -12,7 +12,7 @@ Live demo: [g3sthousen.github.io/weather-animations](https://g3sthousen.github.i
 
 ## Features
 
-- Animated weather states for clear, cloudy, overcast, rain, drizzle, showers, freezing rain, sleet, snow, flurries, blizzard, storm, fog, mist, haze, smoke, dust, wind, and hail.
+- Animated weather states for clear, cloudy, overcast, rain, drizzle, showers, freezing rain, sleet, snow, flurries, blizzard, storm, fog, mist, haze, smog, smoke, dust, wind, and hail.
 - Light, medium, and heavy intensity variants.
 - Day and night rendering with condition-specific sky palettes.
 - Subtle/rich fidelity modes for states with extra visual detail.
@@ -134,7 +134,7 @@ export function App() {
 
 ## Weather Icons
 
-The icon subpackage provides one duotone SVG icon per weather condition — all 19 conditions are covered.
+The icon subpackage provides one duotone SVG icon per weather condition — all 20 conditions are covered.
 
 | Icon | Condition | React component | Raw SVG |
 | --- | --- | --- | --- |
@@ -154,6 +154,7 @@ The icon subpackage provides one duotone SVG icon per weather condition — all 
 | <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/fog.svg" width="32" height="32" alt="Fog icon"> | `fog` | `FogIcon` | `weather-animations/icons/fog.svg` |
 | <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/mist.svg" width="32" height="32" alt="Mist icon"> | `mist` | `MistIcon` | `weather-animations/icons/mist.svg` |
 | <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/haze.svg" width="32" height="32" alt="Haze icon"> | `haze` | `HazeIcon` | `weather-animations/icons/haze.svg` |
+| <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/smog.svg" width="32" height="32" alt="Smog icon"> | `smog` | `SmogIcon` | `weather-animations/icons/smog.svg` |
 | <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/smoke.svg" width="32" height="32" alt="Smoke icon"> | `smoke` | `SmokeIcon` | `weather-animations/icons/smoke.svg` |
 | <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/dust.svg" width="32" height="32" alt="Dust icon"> | `dust` | `DustIcon` | `weather-animations/icons/dust.svg` |
 | <img src="https://raw.githubusercontent.com/g3sthousen/weather-animations/main/src/icons/wind.svg" width="32" height="32" alt="Wind icon"> | `wind` | `WindIcon` | `weather-animations/icons/wind.svg` |
@@ -188,13 +189,13 @@ const iconPath = require.resolve('weather-animations/icons/rain.svg');
 
 Icon components use standard SVG props such as `width`, `height`, `className`, `style`, and ARIA attributes. Colors can be themed with `--wi-primary` and `--wi-accent`.
 
-Icons cover every condition: `clear`, `cloudy`, `overcast`, `rain`, `drizzle`, `showers`, `freezing-rain`, `sleet`, `snow`, `flurries`, `blizzard`, `storm`, `hail`, `fog`, `mist`, `haze`, `smoke`, `dust`, and `wind`. The component name is the PascalCase condition followed by `Icon` (e.g. `FreezingRainIcon`).
+Icons cover every condition: `clear`, `cloudy`, `overcast`, `rain`, `drizzle`, `showers`, `freezing-rain`, `sleet`, `snow`, `flurries`, `blizzard`, `storm`, `hail`, `fog`, `mist`, `haze`, `smog`, `smoke`, `dust`, and `wind`. The component name is the PascalCase condition followed by `Icon` (e.g. `FreezingRainIcon`).
 
 ## Configuration
 
 | Option | Values | Default |
 | --- | --- | --- |
-| `condition` | `clear`, `cloudy`, `overcast`, `rain`, `drizzle`, `showers`, `freezing-rain`, `sleet`, `snow`, `flurries`, `blizzard`, `storm`, `fog`, `mist`, `haze`, `smoke`, `dust`, `wind`, `hail` | Required |
+| `condition` | `clear`, `cloudy`, `overcast`, `rain`, `drizzle`, `showers`, `freezing-rain`, `sleet`, `snow`, `flurries`, `blizzard`, `storm`, `fog`, `mist`, `haze`, `smog`, `smoke`, `dust`, `wind`, `hail` | Required |
 | `intensity` | `light`, `medium`, `heavy` | `medium` |
 | `time` | `day`, `night` | `day` |
 | `fidelity` | `subtle`, `rich` | `subtle` |

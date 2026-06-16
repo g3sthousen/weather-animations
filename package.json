@@ -1,6 +1,6 @@
 {
   "name": "weather-animations",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Canvas-powered JavaScript weather backgrounds with TypeScript types, React support, and duotone weather icons.",
   "type": "module",
   "license": "MIT",
